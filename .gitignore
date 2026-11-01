@@ -31,3 +31,8 @@ lerna-debug.log*
 tsconfig.tsbuildinfo
 
 memo.md
+
+test-results/
+.vitest-attachments/
+**/__screenshots__/
+storybook-static

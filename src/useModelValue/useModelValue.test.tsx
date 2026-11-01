@@ -116,4 +116,22 @@ describe('useModelValue', () => {
     expect(rendersOf('row:L-1')).toBe(1);
     expect(rendersOf('row:L-4')).toBe(1);
   });
+
+  it('モデルが undefined なら undefined を返す。後からモデルが渡れば、その値を読む', () => {
+    const order = createRecordModel(orderDefinition, {
+      defaultData: createOrder(),
+    });
+    const { result, rerender } = renderHook(
+      ({ model }) => useModelValue(model),
+      {
+        initialProps: {
+          model: undefined as
+            ReturnType<typeof order.field<'customer'>> | undefined,
+        },
+      },
+    );
+    expect(result.current).toBeUndefined();
+    rerender({ model: order.field('customer') });
+    expect(result.current).toBe('Alice');
+  });
 });

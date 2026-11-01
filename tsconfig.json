@@ -3,5 +3,5 @@
   "compilerOptions": {
     "jsx": "react-jsx"
   },
-  "include": ["src", "globals.d.ts"]
+  "include": ["src", "stories", ".storybook", "globals.d.ts"]
 }

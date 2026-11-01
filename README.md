@@ -1,6 +1,7 @@
 # @fringeworks/react-state-model
 
-`@fringeworks/react-state-model` is a library some will find handy, for using the models of [`@fringeworks/state-model`](https://github.com/fringeworks-js/state-model) in React components.
+`@fringeworks/react-state-model` is a library some will find handy, for using the models of [`@fringeworks/state-model`](https://github.com/fringeworks-js/state-model) in React components.\
+It provides hooks that create root models and derived models, and a hook that reads the value of a model and renders again when it changes. For the models themselves (reading, writing, subscribing, and derived models), see the README of state-model.
 
 **[日本語のREADMEはこちら](./README.ja.md)**
 
@@ -12,9 +13,17 @@ npm install @fringeworks/state-model @fringeworks/react-state-model
 
 ## Usage
 
+### Creating a root model and reading values
+
 ```tsx
 import type { ListModel, RecordModel } from '@fringeworks/state-model';
-import { useModelValue } from '@fringeworks/react-state-model';
+import { useModelValue, useRecordModel } from '@fringeworks/react-state-model';
+
+function OrderForm() {
+  // Uncontrolled: the model holds the data itself
+  const order = useRecordModel(orderDefinition, { defaultData: initialOrder });
+  return <LineList lines={order.list('lines')} />;
+}
 
 function LineList({ lines }: { lines: ListModel<Line> }) {
   const ids = useModelValue(lines.ids()); // Subscribes only to the order of ids
@@ -35,14 +44,308 @@ function LineRow({ line }: { line: RecordModel<Line, true> }) {
 
 Changing the price of a record does not render the list component again; only the changed row is rendered again. The same id returns the same model, so if the rows are `memo`, adding a record does not render the other rows again either.
 
-Create a root model outside components, or only once with `useState(() => createRecordModel(...))` and the like. Hooks that create root models will be added later.
+### Using a value and its setter as a pair
+
+When you only display a value and write it when the user changes it, `useModelValueState` returns a pair in the same shape as `useState`.
+
+```tsx
+function PriceInput({ price }: { price: FieldModel<number, true> }) {
+  const [value, setValue] = useModelValueState(price);
+  return (
+    <input
+      type="number"
+      value={value ?? 0}
+      onChange={(event) => setValue(Number(event.target.value))}
+    />
+  );
+}
+```
+
+The setter is the model's `set` itself, so it also accepts a function that receives the previous value (`setValue((prev) => prev + 1)`), and its reference is stable.
+
+### Using the parent's state as the data owner (controlled)
+
+```tsx
+function ProfileForm() {
+  const [profile, setProfile] = useState(initialProfile);
+  const model = useRecordModel(profileDefinition, {
+    data: profile,
+    onChangeData: setProfile,
+  });
+  // ...
+}
+```
+
+Writes to the model are passed to the parent's state through `onChangeData`, and when the parent renders again, the new `data` is passed to the model. Consecutive writes do not lose earlier changes, whether they are in one event handler or separated by `await`.
+
+### Filtering, sorting, and grouping (derived models)
+
+```tsx
+const byPrice = (a: Product, b: Product) => a.price - b.price;
+
+function ProductList({ keyword }: { keyword: string }) {
+  const items = useListModel(productListDefinition, {
+    data: products,
+    onChangeData: setProducts,
+  });
+  // Recreate the condition function only when the condition changes
+  const filter = useCallback(
+    (product: Product) => product.name.includes(keyword),
+    [keyword],
+  );
+  const visible = useDerivedList(items, { filter, sort: byPrice });
+  const grouped = useGroupedList(visible, { groupBy: 'category' });
+  const groups = useModelValue(grouped);
+  // ...
+}
+```
+
+### Using models in nested components (scopes)
+
+On screens where the source code is split and nested many levels deep, or where children are rendered dynamically (such as screens rendered from settings), passing models down through props becomes hard. `ModelScope` provides a model to descendants, and components use the model of the nearest scope.
+
+```tsx
+import {
+  ModelScope,
+  useModelAt,
+  useModelValue,
+  useRecordModel,
+} from '@fringeworks/react-state-model';
+
+function OrderPage() {
+  const order = useRecordModel(orderDefinition, { defaultData: initialOrder });
+  return (
+    <ModelScope model={order} id="order">
+      <Lines />
+    </ModelScope>
+  );
+}
+
+function LineRow({ id }: { id: string }) {
+  const lines = useModelAt(['lines'], 'order'); // A path relative to the scope with the id "order"
+  // With the record's model in a scope, components inside read values by paths relative to the record
+  return (
+    <ModelScope model={(lines as ListModel<Line>).record(id)}>
+      <PriceInput />
+    </ModelScope>
+  );
+}
+
+function PriceInput() {
+  const price = useModelAt(['price']); // A path relative to the nearest scope (the record)
+  // ...
+}
+```
+
+- Scopes can be nested. Hooks use the model of the nearest scope, and with an `id`, they go up the scopes and use the model of the scope with that id
+- Any model can be placed in a scope: a root model, a child model, or a derived model. With a derived model, paths start with a record id
+- Paths and ids are strings, so settings (JSON) can point to "which value of which scope"
+- `useModelAt` and `useScopedModel` only take out models and do not subscribe. Read values with `useModelValue`
+- Types are lost through Context. Narrow the result of `useModelAt` with `kind`, and specify the type of `useScopedModel` with a type argument (`useScopedModel<RecordModel<Order>>()`)
+- `useModelValue` also accepts `undefined`, so you can read values without branching on whether a model was found (`useModelValue(useModelAt(['price']))`)
+
+### Typed scopes
+
+In components written in code, create a typed scope with `createModelScope`. Following the taken-out model with `list()`, `record()`, and `field()` keeps types all the way. Use paths (`useModelAt`) where the model is decided at run time, such as components rendered from settings.
+
+```tsx
+import {
+  createModelScope,
+  useModelValue,
+} from '@fringeworks/react-state-model';
+
+// Create it at the top level of a module, and import it from components
+export const OrderScope = createModelScope<RecordModel<Order>>();
+
+function OrderPage() {
+  const order = useRecordModel(orderDefinition, { defaultData: initialOrder });
+  return (
+    <OrderScope.Provider model={order}>
+      <Total />
+    </OrderScope.Provider>
+  );
+}
+
+function Total() {
+  // lines is typed as readonly Line[] | undefined
+  const lines = useModelValue(OrderScope.useModel()?.list('lines'));
+  // ...
+}
+```
+
+- Each typed scope has its own Context, so it cannot be found by the id of `ModelScope`. To use it as the base of `useModelAt`, pass the taken-out model (`useModelAt(path, OrderScope.useModel())`)
+- You may place the same model in both a typed scope and a `ModelScope`
+
+## Things to know
+
+- **No re-creation**: a model is created at the first render, and the same one is returned afterwards. The definition and the source of a derived model are also the ones from the first render. To change them, change the component's `key` to create it again (a warning is shown during development when the source of a derived model changes)
+- **Controlled and uncontrolled**: decided at the first render. Switching between `defaultData` and `data` later shows a warning during development, and the first mode is kept
+- **Condition functions are compared by reference**: the conditions of a derived model (`filter`, `sort`, `groupBy`, `filterGroups`, `sortGroups`) are replaced only when their references change. Creating a function on every render replaces it and rebuilds the result every time, so use `useCallback` or a function outside the component
+- **Not reapplying on edits**: on input screens, set `filterRefresh` and `sortRefresh` to `'manual'` so that edited records do not disappear or move (see "Not reapplying on edits" in the README of state-model). Pass the trigger to reapply to `refreshOn`. When any first-level property of `refreshOn` changes, `refresh()` is called after rendering (e.g. `refreshOn={{ editingId }}` reapplies when the record being edited changes)
+- **When values are passed**: when controlled, the model takes the new `data` during the render in which the data owner renders again, and notifies subscribers after rendering (`useLayoutEffect`). Children read the new value in the same render, so an input's value is never written back to the old value, and input methods (such as Japanese input) are not broken. The conditions of derived models are replaced after rendering. The first render right after a condition changes shows the previous result, and the component is rendered again before it is painted (the old result never appears on screen)
+- **`onChangeData`**: the latest function is called. You may pass a new function on every render
+- **Pending data**: when controlled, changes the parent has not applied yet are discarded when new `data` is received, or in the next macrotask. If the parent does not accept a change, it is not mixed into writes in later tasks (verified in Chromium, Firefox, and WebKit)
 
 ## API
+
+| Hook                                  | Description                                                                            |
+| ------------------------------------- | -------------------------------------------------------------------------------------- |
+| `useListModel(definition, options)`   | Creates a root model of the List kind                                                  |
+| `useRecordModel(definition, options)` | Creates a root model of the Record kind                                                |
+| `useFieldModel(definition, options)`  | Creates a root model of the Field kind                                                 |
+| `useDerivedList(source, options?)`    | Creates a filtered and sorted derived model                                            |
+| `useGroupedList(source, options)`     | Creates a grouped derived model                                                        |
+| `useModelValue(model)`                | Reads the value of a model and renders again when it changes                           |
+| `useModelValueState(model)`           | Returns the value of a model and its setter as a pair, in the same shape as `useState` |
+| `useScopedModel(id?)`                 | Takes out the model of a scope                                                         |
+| `useModelAt(path, target?)`           | Takes out a child model by a path relative to a base model                             |
+| `createModelScope()`                  | Creates a typed scope (a pair of a scope component and a hook)                         |
+
+### `useListModel` / `useRecordModel` / `useFieldModel`
+
+```ts
+useListModel<E>(
+  definition: ListDefinition<E>,
+  options: ListModelOptions<E>,
+): ListModel<E> & ModelRoot<readonly E[]>
+useRecordModel<T>(
+  definition: RecordDefinition<T>,
+  options: RecordModelOptions<T>,
+): RecordModel<T> & ModelRoot<T>
+useFieldModel<V>(
+  definition: FieldDefinition,
+  options: FieldModelOptions<V>,
+): FieldModel<V> & ModelRoot<V>
+```
+
+Creates a root model. The parameters and options are the same as `createListModel`, `createRecordModel`, and `createFieldModel` of state-model.
+
+| Option         | Type                | Description                                                                            |
+| -------------- | ------------------- | -------------------------------------------------------------------------------------- |
+| `defaultData`  | `D`                 | Uncontrolled: the initial data, held by the model                                      |
+| `data`         | `D`                 | Controlled: the data owner's data. Passed to the model after rendering when it changes |
+| `onChangeData` | `(data: D) => void` | Controlled: asks the data owner to apply a write. Receives the whole new data          |
+
+### `useDerivedList`
+
+```ts
+useDerivedList<E, S extends ListSource<E>>(
+  source: S,
+  options?: DerivedListOptions<E>,
+): DerivedList<E, S>
+```
+
+Creates a derived model with `createDerivedList` of state-model. When the options (`filter`, `sort`, `filterRefresh`, `sortRefresh`) change, they are replaced with `setFilter` and the like after rendering.
+
+| Option       | Type                 | Description                                                                                          |
+| ------------ | -------------------- | ---------------------------------------------------------------------------------------------------- |
+| `refreshOn?` | `ChangeDependencies` | The trigger to reapply. When any first-level property changes, `refresh()` is called after rendering |
+
+The other options are the same as `createDerivedList`.
+
+### `useGroupedList`
+
+```ts
+useGroupedList<E, K, S extends ListSource<E>>(
+  source: S,
+  options: GroupedListOptions<E, K>,
+): GroupedList<K, E, S>
+```
+
+Creates a derived model with `createGroupedList` of state-model. When the options (`groupBy`, `filterGroups`, `sortGroups`, `filterRefresh`, `sortRefresh`) change, they are replaced after rendering. `refreshOn` is the same as in `useDerivedList`.
 
 ### `useModelValue`
 
 ```ts
 useModelValue<V>(model: ReadonlyModel<V>): V
+useModelValue<V>(model: ReadonlyModel<V> | undefined): V | undefined
 ```
 
-Reads the value of a model and renders again when the value (reference) changes. Accepts a `ListModel`, `RecordModel`, `FieldModel`, or the return value of `ids()`.
+Reads the value of a model and renders again when the value (reference) changes. Accepts a `ListModel`, `RecordModel`, `FieldModel`, a derived model, or the return value of `ids()`. If the model is `undefined`, it returns `undefined` (when `useModelAt` and the like do not find a model; hooks cannot be called conditionally).
+
+### `useModelValueState`
+
+```ts
+useModelValueState<M extends WritableModel>(
+  model: M,
+): [ReturnType<M['get']>, M['set']]
+useModelValueState<M extends WritableModel>(
+  model: M | undefined,
+): [ReturnType<M['get']> | undefined, M['set']]
+```
+
+Returns the value of a model and its setter as a pair, in the same shape as `useState`. Like `useModelValue`, it renders again when the value changes. The setter is the model's `set` itself, accepts a function that receives the previous value, and is the same function for the same model. Only writable models (`FieldModel`, `RecordModel`, `ListModel`) are accepted (derived models and the return value of `ids()` have no `set`, so they are type errors). If the model is `undefined`, the value is `undefined` and the setter does nothing.
+
+### `ModelScope`
+
+```tsx
+<ModelScope model={model} id="order">
+  {children}
+</ModelScope>
+```
+
+A scope that provides a model to descendant components. Scopes can be nested.
+
+| Property | Type                     | Description                                                                             |
+| -------- | ------------------------ | --------------------------------------------------------------------------------------- |
+| `model`  | `ReadonlyModel<unknown>` | The model provided to descendants (a root model, a child model, or a derived model)     |
+| `id?`    | `string`                 | The id of the scope. When a hook receives an id, it uses the nearest scope with that id |
+
+### `useScopedModel`
+
+```ts
+useScopedModel<M extends ReadonlyModel<unknown>>(id?: string): M | undefined
+```
+
+Returns the model of the nearest scope (or of the nearest scope with the `id`). It does not subscribe. If no scope is found, it returns `undefined` and warns during development. Specify the type with a type argument.
+
+### `useModelAt`
+
+```ts
+useModelAt(
+  path: readonly RecordId[],
+  target?: ModelTarget,
+): UnknownModel | undefined
+```
+
+Returns a child model by a path of keys and ids relative to a base model (`at()` of state-model). It does not subscribe. The kind of the returned model is decided at run time, so narrow it with `kind`.
+
+| Parameter | Type                  | Description                                                                                                     |
+| --------- | --------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `path`    | `readonly RecordId[]` | A path of keys and ids from the base model                                                                      |
+| `target?` | `ModelTarget`         | The base model. The nearest scope if omitted, the scope with the id if a string, or the model itself if a model |
+
+When the base model is not found, or it has no `at()` (a Field model or the return value of `ids()`), it returns `undefined` and warns during development.
+
+### `createModelScope`
+
+```ts
+createModelScope<M extends ReadonlyModel<unknown>>(): TypedModelScope<M>
+```
+
+Creates a typed scope. Create it at the top level of a module, and import it from components.
+
+| Member       | Description                                                                                                                                         |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Provider`   | A scope component that provides a model to descendants (the property is `model`). When nested, `useModel` uses the nearest one                      |
+| `useModel()` | A hook that returns the model of the nearest `Provider` (does not subscribe). If none is found, it returns `undefined` and warns during development |
+
+### Types
+
+| Type                          | Description                                                         |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `ModelScopeProps`             | Props of `ModelScope`                                               |
+| `ModelTarget`                 | How `useModelAt` specifies the base model (an id string or a model) |
+| `WritableModel`               | A writable model (what `useModelValueState` accepts)                |
+| `TypedModelScope<M>`          | A typed scope created by `createModelScope`                         |
+| `TypedModelScopeProps<M>`     | Props of the `Provider` of a typed scope                            |
+| `UseDerivedListOptions<E>`    | Options of `useDerivedList` (including `refreshOn`)                 |
+| `UseGroupedListOptions<E, K>` | Options of `useGroupedList` (including `refreshOn`)                 |
+
+## Storybook
+
+Examples of usage are available in Storybook (filtering, sorting, and grouping a list; an order form with lines; the controlled form using the parent's state). Each row shows its render count, so you can see which parts are rendered again.
+
+```sh
+pnpm storybook
+```
