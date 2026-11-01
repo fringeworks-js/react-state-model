@@ -1,6 +1,7 @@
 import type {
   ListGroup,
   ListModel,
+  ListSelection,
   RecordModel,
 } from '@fringeworks/state-model';
 import type { Meta, StoryObj } from '@storybook/react-vite';
@@ -8,7 +9,9 @@ import { memo, useState } from 'react';
 import {
   useDerivedList,
   useGroupedList,
+  useIsSelected,
   useListModel,
+  useListSelection,
   useModelValue,
 } from '../src';
 import { box, NumberInput, RenderCount, TextInput } from './_shared';
@@ -57,15 +60,25 @@ const groupSorts = {
  */
 const ProductRow = memo(function ProductRow({
   product,
+  selection,
 }: {
   product: RecordModel<Product, true>;
+  selection: ListSelection<Product>;
 }) {
   const value = useModelValue(product);
+  // 自分の行が選ばれているかだけを読む（選択を変えても、ほかの行は描画し直さない）
+  const selected = useIsSelected(selection, value?.id ?? '');
   if (value === undefined) {
     return null;
   }
   return (
     <li>
+      <input
+        type="checkbox"
+        aria-label={`${value.name} を選ぶ`}
+        checked={selected}
+        onChange={() => selection.toggle(value.id)}
+      />{' '}
       <TextInput field={product.field('name')} />{' '}
       <TextInput field={product.field('category')} width={90} />{' '}
       <NumberInput field={product.field('price')} />
@@ -80,14 +93,16 @@ const ProductRow = memo(function ProductRow({
 function ProductRows({
   ids,
   list,
+  selection,
 }: {
   ids: readonly string[];
   list: Pick<ListModel<Product>, 'record'>;
+  selection: ListSelection<Product>;
 }) {
   return (
     <ul style={{ paddingLeft: 16 }}>
       {ids.map((id) => (
-        <ProductRow key={id} product={list.record(id)} />
+        <ProductRow key={id} product={list.record(id)} selection={selection} />
       ))}
     </ul>
   );
@@ -130,6 +145,9 @@ function ProductList() {
     sortRefresh: refresh,
   });
   const ids = useModelValue(visible.ids());
+  // 選択は List のモデル（データの場所）につなぐ。絞り込みで見えなくなった行の選択も残る
+  const selection = useListSelection(items, { multiple: true });
+  const selectedRecords = useModelValue(selection.records());
   const groups = useModelValue(grouped);
 
   return (
@@ -222,12 +240,21 @@ function ProductList() {
               {group.key}（{group.records.length} 件・合計{' '}
               {total(group.records)}）
             </strong>
-            <ProductRows ids={group.ids} list={grouped} />
+            <ProductRows ids={group.ids} list={grouped} selection={selection} />
           </section>
         ))
       ) : (
-        <ProductRows ids={ids} list={visible} />
+        <ProductRows ids={ids} list={visible} selection={selection} />
       )}
+      <div>
+        選択 {selectedRecords.length} 件・合計 {total(selectedRecords)}{' '}
+        <button onClick={() => selection.selectAll()}>全部選ぶ</button>{' '}
+        <button onClick={() => selection.clear()}>選択を外す</button>{' '}
+        <button onClick={() => items.remove(selection.get())}>
+          選んだ行を削除
+        </button>
+        <RenderCount />
+      </div>
       <p style={{ color: '#666', fontSize: 12 }}>
         元の一覧（items.get()）は並べ替えても変わらない:{' '}
         {items.ids().get().join(', ')}

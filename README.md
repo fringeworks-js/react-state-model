@@ -100,6 +100,30 @@ function ProductList({ keyword }: { keyword: string }) {
 }
 ```
 
+### Selecting
+
+```tsx
+function ProductList() {
+  const items = useListModel(productListDefinition, { defaultData: products });
+  const selection = useListSelection(items, { multiple: true });
+  // ...
+}
+
+const ProductRow = memo(function ProductRow({ id, selection }) {
+  // Reads only whether its own record is selected (other rows are not rendered again when the selection changes)
+  const selected = useIsSelected(selection, id);
+  return (
+    <input
+      type="checkbox"
+      checked={selected}
+      onChange={() => selection.toggle(id)}
+    />
+  );
+});
+```
+
+To keep the selected ids in the URL or the parent's state, pass a controlled model created with `useFieldModel` to `selectedIds`.
+
 ### Using models in nested components (scopes)
 
 On screens where the source code is split and nested many levels deep, or where children are rendered dynamically (such as screens rendered from settings), passing models down through props becomes hard. `ModelScope` provides a model to descendants, and components use the model of the nearest scope.
@@ -195,6 +219,8 @@ function Total() {
 | `useFieldModel(definition, options)`  | Creates a root model of the Field kind                                                 |
 | `useDerivedList(source, options?)`    | Creates a filtered and sorted derived model                                            |
 | `useGroupedList(source, options)`     | Creates a grouped derived model                                                        |
+| `useListSelection(source, options?)`  | Creates a selection model for a list                                                   |
+| `useIsSelected(selection, id)`        | Reads whether a record is selected and renders again when it changes                   |
 | `useModelValue(model)`                | Reads the value of a model and renders again when it changes                           |
 | `useModelValueState(model)`           | Returns the value of a model and its setter as a pair, in the same shape as `useState` |
 | `useScopedModel(id?)`                 | Takes out the model of a scope                                                         |
@@ -253,6 +279,25 @@ useGroupedList<E, K, S extends ListSource<E>>(
 ```
 
 Creates a derived model with `createGroupedList` of state-model. When the options (`groupBy`, `filterGroups`, `sortGroups`, `filterRefresh`, `sortRefresh`) change, they are replaced after rendering. `refreshOn` is the same as in `useDerivedList`.
+
+### `useListSelection`
+
+```ts
+useListSelection<E, S extends ListSource<E>>(
+  source: S,
+  options?: ListSelectionOptions,
+): ListSelection<E, S>
+```
+
+Creates a selection model with `createListSelection` of state-model. It is created at the first render, and the same one is returned afterwards. The source and options from the first render are also kept.
+
+### `useIsSelected`
+
+```ts
+useIsSelected(selection: ListSelection | undefined, id: RecordId): boolean
+```
+
+Reads whether a record is selected and renders again when it changes. Each row reads a boolean, so when the selection changes, only rows whose selected state changed are rendered again (reading `useModelValue(selection)` in each row renders all rows again). Returns `false` if the selection model is `undefined`.
 
 ### `useModelValue`
 

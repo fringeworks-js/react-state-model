@@ -100,6 +100,30 @@ function ProductList({ keyword }: { keyword: string }) {
 }
 ```
 
+### 選択する
+
+```tsx
+function ProductList() {
+  const items = useListModel(productListDefinition, { defaultData: products });
+  const selection = useListSelection(items, { multiple: true });
+  // ...
+}
+
+const ProductRow = memo(function ProductRow({ id, selection }) {
+  // 自分の行が選ばれているかだけを読む（選択を変えても、ほかの行は描画し直さない）
+  const selected = useIsSelected(selection, id);
+  return (
+    <input
+      type="checkbox"
+      checked={selected}
+      onChange={() => selection.toggle(id)}
+    />
+  );
+});
+```
+
+選んだ id を URL や親の state に持たせたいときは、`useFieldModel` で作った制御の置き場所を `selectedIds` に渡します。
+
 ### ネストした部品で使う（スコープ）
 
 ソースコードが分かれて何段もネストした画面や、子が動的に描かれる画面（設定から描く画面など）では、モデルを props で渡し続けるのが難しくなります。`ModelScope` でモデルを子孫に配り、部品は最寄りのスコープのモデルを使います。
@@ -195,6 +219,8 @@ function Total() {
 | `useFieldModel(definition, options)`  | Field のルートのモデルを作る                          |
 | `useDerivedList(source, options?)`    | 絞り込み・並べ替えた派生モデルを作る                  |
 | `useGroupedList(source, options)`     | グループ化した派生モデルを作る                        |
+| `useListSelection(source, options?)`  | 一覧の選択のモデルを作る                              |
+| `useIsSelected(selection, id)`        | 行を選んでいるかを読み、変わったら描画し直す          |
 | `useModelValue(model)`                | モデルの値を読み、変わったら描画し直す                |
 | `useModelValueState(model)`           | モデルの値とセッターを、`useState` と同じ形の組で返す |
 | `useScopedModel(id?)`                 | スコープのモデルを取り出す                            |
@@ -253,6 +279,25 @@ useGroupedList<E, K, S extends ListSource<E>>(
 ```
 
 state-model の `createGroupedList` で派生モデルを作ります。オプション（`groupBy`・`filterGroups`・`sortGroups`・`filterRefresh`・`sortRefresh`）が変わったら、描画の後に差し替えます。`refreshOn` は `useDerivedList` と同じです。
+
+### `useListSelection`
+
+```ts
+useListSelection<E, S extends ListSource<E>>(
+  source: S,
+  options?: ListSelectionOptions,
+): ListSelection<E, S>
+```
+
+state-model の `createListSelection` で選択のモデルを作ります。最初の描画で作り、以後は同じものを返します。上流とオプションも、最初の描画のものを使い続けます。
+
+### `useIsSelected`
+
+```ts
+useIsSelected(selection: ListSelection | undefined, id: RecordId): boolean
+```
+
+行を選んでいるかを読み、変わったら描画し直します。行ごとに真偽値を読むので、選択を変えても、選ばれ方が変わった行だけが描画し直します（各行で `useModelValue(selection)` を読むと、全部の行が描画し直します）。選択のモデルが `undefined` なら `false` を返します。
 
 ### `useModelValue`
 
