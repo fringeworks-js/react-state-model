@@ -120,8 +120,8 @@ importers:
         specifier: ^0.13.2
         version: 0.13.2(eslint@10.14.0(supports-color@7.2.0))(prettier@3.9.10)(rollup@4.67.2)(supports-color@7.2.0)(tsdown@0.23.4(oxc-resolver@11.21.2)(tsx@4.23.15)(typescript@6.0.3))(typescript@6.0.3)
       '@fringeworks/state-model':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
       '@storybook/addon-docs':
         specifier: ^10.3.6
         version: 10.6.5(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(storybook@10.6.5(@types/react@19.3.0)(prettier@3.9.10)(react@19.3.1))
@@ -575,8 +575,8 @@ packages:
     peerDependencies:
       rollup: ^4.0.0
 
-  '@fringeworks/state-model@0.4.0':
-    resolution: {integrity: sha512-VhFoCLEdOUHPAkmTE/j54rJPmw3uhlFlKY3912x2KfKCZtTwryklocnMfP6DbHVSlCe+GXBDIlVovAdJ2J5x+g==}
+  '@fringeworks/state-model@0.5.0':
+    resolution: {integrity: sha512-nYCmsl0CNBHBPqVDjei8s5IZs9/jHwV+Efd+OU6iM48wqNi/yk1dqaWieYM8eFKRbPmq3rHiN0mSQorGg4qulA==}
 
   '@fringeworks/types@1.0.0':
     resolution: {integrity: sha512-o9co16ePKE1cL/Qpail6LnTVrTC/HeIATrYBDpNcd/aef2mNEVUdhVD2X001YdkpCAXnwgEjnmSOpBqMEtI4aA==}
@@ -3278,7 +3278,7 @@ snapshots:
       sort-package-json: 3.7.1
       type-fest: 5.10.0
 
-  '@fringeworks/state-model@0.4.0':
+  '@fringeworks/state-model@0.5.0':
     dependencies:
       '@fringeworks/utils': 2.1.0
 

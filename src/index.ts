@@ -7,6 +7,7 @@ export * from './useIsSelected';
 export * from './useListModel';
 export * from './useListSelection';
 export * from './useModelAt';
+export * from './useModelStatus';
 export * from './useModelValue';
 export * from './useModelValueState';
 export * from './useRecordModel';

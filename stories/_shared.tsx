@@ -24,15 +24,18 @@ export function RenderCount() {
 export function TextInput({
   field,
   width = 120,
+  onBlur,
 }: {
   field: FieldModel<string, boolean>;
   width?: number;
+  onBlur?: () => void;
 }) {
   const [value, setValue] = useModelValueState(field);
   return (
     <input
       value={value ?? ''}
       onChange={(event) => setValue(event.target.value)}
+      onBlur={onBlur}
       style={{ width }}
     />
   );
@@ -41,13 +44,20 @@ export function TextInput({
 /**
  * Field のモデルにつないだ数値の入力欄（入力途中の値は扱わない）
  */
-export function NumberInput({ field }: { field: FieldModel<number, boolean> }) {
+export function NumberInput({
+  field,
+  onBlur,
+}: {
+  field: FieldModel<number, boolean>;
+  onBlur?: () => void;
+}) {
   const [value, setValue] = useModelValueState(field);
   return (
     <input
       type="number"
       value={value ?? 0}
       onChange={(event) => setValue(Number(event.target.value))}
+      onBlur={onBlur}
       style={{ width: 80 }}
     />
   );

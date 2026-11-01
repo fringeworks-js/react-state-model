@@ -221,6 +221,7 @@ function Total() {
 | `useGroupedList(source, options)`     | Creates a grouped derived model                                                        |
 | `useListSelection(source, options?)`  | Creates a selection model for a list                                                   |
 | `useIsSelected(selection, id)`        | Reads whether a record is selected and renders again when it changes                   |
+| `useModelStatus(source)`              | Creates a status model (dirty and touched)                                             |
 | `useModelValue(model)`                | Reads the value of a model and renders again when it changes                           |
 | `useModelValueState(model)`           | Returns the value of a model and its setter as a pair, in the same shape as `useState` |
 | `useScopedModel(id?)`                 | Takes out the model of a scope                                                         |
@@ -298,6 +299,14 @@ useIsSelected(selection: ListSelection | undefined, id: RecordId): boolean
 ```
 
 Reads whether a record is selected and renders again when it changes. Each row reads a boolean, so when the selection changes, only rows whose selected state changed are rendered again (reading `useModelValue(selection)` in each row renders all rows again). Returns `false` if the selection model is `undefined`.
+
+### `useModelStatus`
+
+```ts
+useModelStatus<M extends ModelStatusSource>(source: M): ModelStatus<M>
+```
+
+Creates a status model with `createModelStatus` of state-model. It is created at the first render, and the same one is returned afterwards. The baseline is the data at the first render. Read values like `useModelValue(status.dirty(['lines', id]))`.
 
 ### `useModelValue`
 

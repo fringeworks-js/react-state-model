@@ -221,6 +221,7 @@ function Total() {
 | `useGroupedList(source, options)`     | グループ化した派生モデルを作る                        |
 | `useListSelection(source, options?)`  | 一覧の選択のモデルを作る                              |
 | `useIsSelected(selection, id)`        | 行を選んでいるかを読み、変わったら描画し直す          |
+| `useModelStatus(source)`              | 状態のモデル（変更済みか・触ったか）を作る            |
 | `useModelValue(model)`                | モデルの値を読み、変わったら描画し直す                |
 | `useModelValueState(model)`           | モデルの値とセッターを、`useState` と同じ形の組で返す |
 | `useScopedModel(id?)`                 | スコープのモデルを取り出す                            |
@@ -298,6 +299,14 @@ useIsSelected(selection: ListSelection | undefined, id: RecordId): boolean
 ```
 
 行を選んでいるかを読み、変わったら描画し直します。行ごとに真偽値を読むので、選択を変えても、選ばれ方が変わった行だけが描画し直します（各行で `useModelValue(selection)` を読むと、全部の行が描画し直します）。選択のモデルが `undefined` なら `false` を返します。
+
+### `useModelStatus`
+
+```ts
+useModelStatus<M extends ModelStatusSource>(source: M): ModelStatus<M>
+```
+
+state-model の `createModelStatus` で状態のモデルを作ります。最初の描画で作り、以後は同じものを返します。基準のデータは、最初の描画のときのデータです。値は `useModelValue(status.dirty(['lines', id]))` のように読みます。
 
 ### `useModelValue`
 

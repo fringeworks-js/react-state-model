@@ -1,11 +1,12 @@
 import type {
   ListModel,
+  ModelStatus,
   RecordDefinition,
   RecordModel,
 } from '@fringeworks/state-model';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { memo, useState } from 'react';
-import { useModelValue, useRecordModel } from '../src';
+import { useModelStatus, useModelValue, useRecordModel } from '../src';
 import { box, NumberInput, RenderCount, TextInput } from './_shared';
 
 type Line = {
@@ -41,30 +42,46 @@ const initialOrder: Order = {
  * 明細の行。自分の行だけを購読する
  */
 const LineRow = memo(function LineRow({
+  id,
   line,
+  status,
   onRemove,
 }: {
+  id: string;
   line: RecordModel<Line, true>;
+  status: OrderStatus;
   onRemove: (id: string) => void;
 }) {
   const value = useModelValue(line);
+  // 自分の行が変更済みか・触ったかだけを読む
+  const dirty = useModelValue(status.dirty(['lines', id]));
+  const touched = useModelValue(status.touched(['lines', id]));
+  // フォーカスが外れたら、触ったことにする（いつ触ったとするかは UI が決める）
+  const touch = (key: keyof Line) => () => status.touch(['lines', id, key]);
   if (value === undefined) {
     return null;
   }
   return (
     <tr>
       <td>
-        <TextInput field={line.field('product')} />
+        <TextInput field={line.field('product')} onBlur={touch('product')} />
       </td>
       <td>
-        <NumberInput field={line.field('price')} />
+        <NumberInput field={line.field('price')} onBlur={touch('price')} />
       </td>
       <td>
-        <NumberInput field={line.field('quantity')} />
+        <NumberInput
+          field={line.field('quantity')}
+          onBlur={touch('quantity')}
+        />
       </td>
       <td>{value.price * value.quantity}</td>
       <td>
-        <button onClick={() => onRemove(value.lineId)}>削除</button>
+        <button onClick={() => onRemove(value.lineId)}>削除</button>{' '}
+        <span style={{ fontSize: 12, color: dirty ? '#c60' : '#999' }}>
+          {dirty ? '変更あり' : '変更なし'}
+          {touched ? '・触った' : ''}
+        </span>
         <RenderCount />
       </td>
     </tr>
@@ -74,7 +91,15 @@ const LineRow = memo(function LineRow({
 /**
  * 明細の一覧。id の並びだけを購読する
  */
-function Lines({ lines }: { lines: ListModel<Line> }) {
+type OrderStatus = ModelStatus<RecordModel<Order>>;
+
+function Lines({
+  lines,
+  status,
+}: {
+  lines: ListModel<Line>;
+  status: OrderStatus;
+}) {
   const ids = useModelValue(lines.ids());
   return (
     <table>
@@ -91,7 +116,9 @@ function Lines({ lines }: { lines: ListModel<Line> }) {
         {ids.map((id) => (
           <LineRow
             key={id}
+            id={id}
             line={lines.record(id)}
+            status={status}
             onRemove={(lineId) => lines.remove([lineId])}
           />
         ))}
@@ -118,10 +145,28 @@ function Total({ lines }: { lines: ListModel<Line> }) {
 }
 
 /**
+ * フォーム全体の状態。どこかが変更済みか・触ったか
+ */
+function StatusSummary({ status }: { status: OrderStatus }) {
+  const dirty = useModelValue(status.dirty());
+  const linesDirty = useModelValue(status.dirty(['lines']));
+  const touched = useModelValue(status.touched());
+  return (
+    <p>
+      フォーム: {dirty ? '変更あり' : '変更なし'}（明細:{' '}
+      {linesDirty ? '変更あり' : '変更なし'}）・
+      {touched ? '触った項目あり' : '未操作'}
+      <RenderCount />
+    </p>
+  );
+}
+
+/**
  * 注文と明細のフォーム（非制御。データはモデルの中に持つ）
  */
 function OrderForm() {
   const order = useRecordModel(orderDefinition, { defaultData: initialOrder });
+  const status = useModelStatus(order);
   const lines = order.list('lines');
   const shipping = order.record('shipping');
   const [nextId, setNextId] = useState(3);
@@ -130,13 +175,17 @@ function OrderForm() {
   return (
     <div style={box}>
       <div>
-        顧客 <TextInput field={order.field('customer')} />
+        顧客{' '}
+        <TextInput
+          field={order.field('customer')}
+          onBlur={() => status.touch(['customer'])}
+        />
       </div>
       <div>
         郵便番号 <TextInput field={shipping.field('zip')} width={90} /> 住所{' '}
         <TextInput field={shipping.field('address')} width={200} />
       </div>
-      <Lines lines={lines} />
+      <Lines lines={lines} status={status} />
       <button
         onClick={() => {
           lines.insert([
@@ -149,7 +198,10 @@ function OrderForm() {
       </button>{' '}
       <button onClick={() => setSnapshot(order.get())}>
         保存するデータを見る
-      </button>
+      </button>{' '}
+      <button onClick={() => status.markClean()}>保存したことにする</button>{' '}
+      <button onClick={() => status.reset()}>状態をリセット</button>
+      <StatusSummary status={status} />
       <Total lines={lines} />
       {snapshot && (
         <pre style={{ fontSize: 12 }}>{JSON.stringify(snapshot, null, 2)}</pre>
