@@ -35,7 +35,7 @@ function LineRow({ line }: { line: RecordModel<Line, true> }) {
 
 行の価格を変えても、一覧のコンポーネントは描画し直さず、変わった行だけが描画し直します。同じ id には同じモデルが返るので、行を `memo` にすれば、行を足したときもほかの行は描画し直しません。
 
-根のモデルは、コンポーネントの外で作るか、`useState(() => createRecordModel(...))` などで1回だけ作ります。根のモデルを作る hook は今後追加する予定です。
+ルートのモデル（`create*Model` で作るモデル）は、コンポーネントの外で作るか、`useState(() => createRecordModel(...))` などで1回だけ作ります。ルートのモデルを作る hook は今後追加する予定です。
 
 ## API
 

@@ -113,8 +113,8 @@ importers:
         specifier: ^0.13.2
         version: 0.13.2(eslint@10.14.0(supports-color@7.2.0))(prettier@3.9.10)(rollup@4.67.2)(supports-color@7.2.0)(tsdown@0.23.4(tsx@4.23.15)(typescript@6.0.3))(typescript@6.0.3)
       '@fringeworks/state-model':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.2.0
+        version: 0.2.0
       '@testing-library/react':
         specifier: ^16.3.3
         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -515,8 +515,8 @@ packages:
     peerDependencies:
       rollup: ^4.0.0
 
-  '@fringeworks/state-model@0.1.0':
-    resolution: {integrity: sha512-JkYBIzABOpfmvHhXT1COiZRz2iHgSDTdSwk4D1DwmifzUc6MIyiCvAB/xPOPBOiL95j9HyqVN9K+8e/4DfZGYA==}
+  '@fringeworks/state-model@0.2.0':
+    resolution: {integrity: sha512-DYYZSa8NGgi3RvRFqO1vnf0maxqPAGLHE6h1nKrMfSnya8qaIJ0qFXbhB1lYbONdg2vKgtejT+1rSSeT7jZAnQ==}
 
   '@fringeworks/types@1.0.0':
     resolution: {integrity: sha512-o9co16ePKE1cL/Qpail6LnTVrTC/HeIATrYBDpNcd/aef2mNEVUdhVD2X001YdkpCAXnwgEjnmSOpBqMEtI4aA==}
@@ -2498,7 +2498,7 @@ snapshots:
       sort-package-json: 3.7.1
       type-fest: 5.10.0
 
-  '@fringeworks/state-model@0.1.0':
+  '@fringeworks/state-model@0.2.0':
     dependencies:
       '@fringeworks/utils': 2.1.0
 
