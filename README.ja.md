@@ -124,6 +124,47 @@ const ProductRow = memo(function ProductRow({ id, selection }) {
 
 選んだ id を URL や親の state に持たせたいときは、`useFieldModel` で作った制御の置き場所を `selectedIds` に渡します。
 
+### 検証する
+
+規則は state-model の定義の `validate` に書き、`useModelValidation` で検証のモデルを作ります。結果は `useModelValue` で読みます。
+
+```tsx
+function OrderForm() {
+  const order = useRecordModel(orderDefinition, { defaultData });
+  const validation = useModelValidation(order);
+  const invalid = useModelValue(validation.invalid()); // 送信してよいかの判断
+  // ...
+}
+
+function CustomerError({ validation }) {
+  const issues = useModelValue(validation.issues(['customer']));
+  return issues.map((issue, index) => <p key={index}>{issue.message}</p>);
+}
+```
+
+結果はいつも今のデータに対するもので、入力し始めた直後から出ます。**いつ見せるか（触った後・送信した後など）は、画面の側で決めます**。触ったパスの集まりと、送信しようとしたかを持てば書けます。
+
+```tsx
+const touchedKeys = useFieldModel<readonly string[]>({}, { defaultData: [] });
+const submitted = useFieldModel<boolean>({}, { defaultData: false });
+
+// 入力欄: フォーカスが外れたら触ったことにし、触った後か送信しようとした後だけ見せる
+const key = JSON.stringify(['customer']);
+const issues = useModelValue(validation.issues(['customer']));
+const touched = useModelValue(touchedKeys).includes(key);
+const isSubmitted = useModelValue(submitted);
+const visible = touched || isSubmitted ? issues : [];
+<input
+  onBlur={() =>
+    touchedKeys.set((prev) => (prev.includes(key) ? prev : [...prev, key]))
+  }
+/>;
+```
+
+入力欄の部品が「値にできない入力」（`"1,2,"` など）を知らせたいときは、`validation.setIssuesAt('view', path, issues)` で入れ、問題が無くなったら空の配列を入れます（部品が消えるときにも空にします）。規則の結果とまとめて `invalid()` に出ます。
+
+Storybook の「注文フォーム」に、これらを組み合わせた例があります。
+
 ### ネストした部品で使う（スコープ）
 
 ソースコードが分かれて何段もネストした画面や、子が動的に描かれる画面（設定から描く画面など）では、モデルを props で渡し続けるのが難しくなります。`ModelScope` でモデルを子孫に配り、部品は最寄りのスコープのモデルを使います。
@@ -212,21 +253,22 @@ function Total() {
 
 ## API
 
-| hook                                  | 説明                                                  |
-| ------------------------------------- | ----------------------------------------------------- |
-| `useListModel(definition, options)`   | List のルートのモデルを作る                           |
-| `useRecordModel(definition, options)` | Record のルートのモデルを作る                         |
-| `useFieldModel(definition, options)`  | Field のルートのモデルを作る                          |
-| `useDerivedList(source, options?)`    | 絞り込み・並べ替えた派生モデルを作る                  |
-| `useGroupedList(source, options)`     | グループ化した派生モデルを作る                        |
-| `useListSelection(source, options?)`  | 一覧の選択のモデルを作る                              |
-| `useIsSelected(selection, id)`        | 行を選んでいるかを読み、変わったら描画し直す          |
-| `useModelStatus(source)`              | 状態のモデル（変更済みか・触ったか）を作る            |
-| `useModelValue(model)`                | モデルの値を読み、変わったら描画し直す                |
-| `useModelValueState(model)`           | モデルの値とセッターを、`useState` と同じ形の組で返す |
-| `useScopedModel(id?)`                 | スコープのモデルを取り出す                            |
-| `useModelAt(path, target?)`           | 基準のモデルからの相対パスで、下位のモデルを取り出す  |
-| `createModelScope()`                  | 型付きのスコープ（スコープの部品と hook の組）を作る  |
+| hook                                   | 説明                                                  |
+| -------------------------------------- | ----------------------------------------------------- |
+| `useListModel(definition, options)`    | List のルートのモデルを作る                           |
+| `useRecordModel(definition, options)`  | Record のルートのモデルを作る                         |
+| `useFieldModel(definition, options)`   | Field のルートのモデルを作る                          |
+| `useDerivedList(source, options?)`     | 絞り込み・並べ替えた派生モデルを作る                  |
+| `useGroupedList(source, options)`      | グループ化した派生モデルを作る                        |
+| `useListSelection(source, options?)`   | 一覧の選択のモデルを作る                              |
+| `useIsSelected(selection, id)`         | 行を選んでいるかを読み、変わったら描画し直す          |
+| `useModelStatus(source)`               | 状態のモデル（変更済みか）を作る                      |
+| `useModelValidation(source, options?)` | 検証のモデルを作る                                    |
+| `useModelValue(model)`                 | モデルの値を読み、変わったら描画し直す                |
+| `useModelValueState(model)`            | モデルの値とセッターを、`useState` と同じ形の組で返す |
+| `useScopedModel(id?)`                  | スコープのモデルを取り出す                            |
+| `useModelAt(path, target?)`            | 基準のモデルからの相対パスで、下位のモデルを取り出す  |
+| `createModelScope()`                   | 型付きのスコープ（スコープの部品と hook の組）を作る  |
 
 ### `useListModel` / `useRecordModel` / `useFieldModel`
 
@@ -240,7 +282,7 @@ useRecordModel<T>(
   options: RecordModelOptions<T>,
 ): RecordModel<T> & ModelRoot<T>
 useFieldModel<V>(
-  definition: FieldDefinition,
+  definition: FieldDefinition<V>,
   options: FieldModelOptions<V>,
 ): FieldModel<V> & ModelRoot<V>
 ```
@@ -307,6 +349,17 @@ useModelStatus<M extends ModelStatusSource>(source: M): ModelStatus<M>
 ```
 
 state-model の `createModelStatus` で状態のモデルを作ります。最初の描画で作り、以後は同じものを返します。基準のデータは、最初の描画のときのデータです。値は `useModelValue(status.dirty(['lines', id]))` のように読みます。
+
+### `useModelValidation`
+
+```ts
+useModelValidation<M extends ModelValidationSource>(
+  source: M,
+  options?: ModelValidationOptions<V>,
+): ModelValidation<M>
+```
+
+state-model の `createModelValidation` で検証のモデルを作ります。最初の描画で作り、以後は同じものを返します。つなぐモデルとオプション（`validate`）も、最初の描画のものを使い続けます（変えたいときは `key` で作り直します）。結果は `useModelValue(validation.issues(path))`・`useModelValue(validation.invalid(path))` のように読みます。
 
 ### `useModelValue`
 
@@ -398,7 +451,7 @@ createModelScope<M extends ReadonlyModel<unknown>>(): TypedModelScope<M>
 
 ## Storybook
 
-使い方の例を Storybook で見られます（一覧の絞り込み・並べ替え・グループ化、注文と明細のフォーム、親の state を使う制御の形）。行ごとに描画の回数を表示しているので、どこが描画し直すかを確かめられます。
+使い方の例を Storybook で見られます（一覧の絞り込み・並べ替え・グループ化、注文と明細のフォームと検証、親の state を使う制御の形）。行ごとに描画の回数を表示しているので、どこが描画し直すかを確かめられます。
 
 ```sh
 pnpm storybook

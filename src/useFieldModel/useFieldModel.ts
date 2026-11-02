@@ -23,7 +23,7 @@ import useRootModel from '../_internal/_useRootModel';
  * @returns ルートのモデル
  */
 export default function useFieldModel<V>(
-  definition: FieldDefinition,
+  definition: FieldDefinition<V>,
   options: FieldModelOptions<V>,
 ): FieldModel<V> & ModelRoot<V> {
   return useRootModel(

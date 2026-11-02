@@ -8,6 +8,7 @@ export * from './useListModel';
 export * from './useListSelection';
 export * from './useModelAt';
 export * from './useModelStatus';
+export * from './useModelValidation';
 export * from './useModelValue';
 export * from './useModelValueState';
 export * from './useRecordModel';

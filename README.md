@@ -124,6 +124,47 @@ const ProductRow = memo(function ProductRow({ id, selection }) {
 
 To keep the selected ids in the URL or the parent's state, pass a controlled model created with `useFieldModel` to `selectedIds`.
 
+### Validating
+
+Write rules in `validate` of state-model definitions, and create a validation model with `useModelValidation`. Read the issues with `useModelValue`.
+
+```tsx
+function OrderForm() {
+  const order = useRecordModel(orderDefinition, { defaultData });
+  const validation = useModelValidation(order);
+  const invalid = useModelValue(validation.invalid()); // Whether the form can be submitted
+  // ...
+}
+
+function CustomerError({ validation }) {
+  const issues = useModelValue(validation.issues(['customer']));
+  return issues.map((issue, index) => <p key={index}>{issue.message}</p>);
+}
+```
+
+The issues are always those of the current data, so they appear as soon as typing starts. **When to show them (after the value is touched, after a submit, and so on) is decided on the screen side**. You can write it by keeping the set of touched paths and whether a submit was attempted.
+
+```tsx
+const touchedKeys = useFieldModel<readonly string[]>({}, { defaultData: [] });
+const submitted = useFieldModel<boolean>({}, { defaultData: false });
+
+// An input: mark it as touched when focus leaves, and show issues only after it is touched or a submit was attempted
+const key = JSON.stringify(['customer']);
+const issues = useModelValue(validation.issues(['customer']));
+const touched = useModelValue(touchedKeys).includes(key);
+const isSubmitted = useModelValue(submitted);
+const visible = touched || isSubmitted ? issues : [];
+<input
+  onBlur={() =>
+    touchedKeys.set((prev) => (prev.includes(key) ? prev : [...prev, key]))
+  }
+/>;
+```
+
+When an input component wants to report input that cannot become a value (such as `"1,2,"`), set it with `validation.setIssuesAt('view', path, issues)`, and set an empty array when the problem is gone (also when the component is removed). It appears in `invalid()` together with the issues of the rules.
+
+The "注文フォーム" (order form) story in Storybook combines these.
+
 ### Using models in nested components (scopes)
 
 On screens where the source code is split and nested many levels deep, or where children are rendered dynamically (such as screens rendered from settings), passing models down through props becomes hard. `ModelScope` provides a model to descendants, and components use the model of the nearest scope.
@@ -212,21 +253,22 @@ function Total() {
 
 ## API
 
-| Hook                                  | Description                                                                            |
-| ------------------------------------- | -------------------------------------------------------------------------------------- |
-| `useListModel(definition, options)`   | Creates a root model of the List kind                                                  |
-| `useRecordModel(definition, options)` | Creates a root model of the Record kind                                                |
-| `useFieldModel(definition, options)`  | Creates a root model of the Field kind                                                 |
-| `useDerivedList(source, options?)`    | Creates a filtered and sorted derived model                                            |
-| `useGroupedList(source, options)`     | Creates a grouped derived model                                                        |
-| `useListSelection(source, options?)`  | Creates a selection model for a list                                                   |
-| `useIsSelected(selection, id)`        | Reads whether a record is selected and renders again when it changes                   |
-| `useModelStatus(source)`              | Creates a status model (dirty and touched)                                             |
-| `useModelValue(model)`                | Reads the value of a model and renders again when it changes                           |
-| `useModelValueState(model)`           | Returns the value of a model and its setter as a pair, in the same shape as `useState` |
-| `useScopedModel(id?)`                 | Takes out the model of a scope                                                         |
-| `useModelAt(path, target?)`           | Takes out a child model by a path relative to a base model                             |
-| `createModelScope()`                  | Creates a typed scope (a pair of a scope component and a hook)                         |
+| Hook                                   | Description                                                                            |
+| -------------------------------------- | -------------------------------------------------------------------------------------- |
+| `useListModel(definition, options)`    | Creates a root model of the List kind                                                  |
+| `useRecordModel(definition, options)`  | Creates a root model of the Record kind                                                |
+| `useFieldModel(definition, options)`   | Creates a root model of the Field kind                                                 |
+| `useDerivedList(source, options?)`     | Creates a filtered and sorted derived model                                            |
+| `useGroupedList(source, options)`      | Creates a grouped derived model                                                        |
+| `useListSelection(source, options?)`   | Creates a selection model for a list                                                   |
+| `useIsSelected(selection, id)`         | Reads whether a record is selected and renders again when it changes                   |
+| `useModelStatus(source)`               | Creates a status model (dirty)                                                         |
+| `useModelValidation(source, options?)` | Creates a validation model                                                             |
+| `useModelValue(model)`                 | Reads the value of a model and renders again when it changes                           |
+| `useModelValueState(model)`            | Returns the value of a model and its setter as a pair, in the same shape as `useState` |
+| `useScopedModel(id?)`                  | Takes out the model of a scope                                                         |
+| `useModelAt(path, target?)`            | Takes out a child model by a path relative to a base model                             |
+| `createModelScope()`                   | Creates a typed scope (a pair of a scope component and a hook)                         |
 
 ### `useListModel` / `useRecordModel` / `useFieldModel`
 
@@ -240,7 +282,7 @@ useRecordModel<T>(
   options: RecordModelOptions<T>,
 ): RecordModel<T> & ModelRoot<T>
 useFieldModel<V>(
-  definition: FieldDefinition,
+  definition: FieldDefinition<V>,
   options: FieldModelOptions<V>,
 ): FieldModel<V> & ModelRoot<V>
 ```
@@ -307,6 +349,17 @@ useModelStatus<M extends ModelStatusSource>(source: M): ModelStatus<M>
 ```
 
 Creates a status model with `createModelStatus` of state-model. It is created at the first render, and the same one is returned afterwards. The baseline is the data at the first render. Read values like `useModelValue(status.dirty(['lines', id]))`.
+
+### `useModelValidation`
+
+```ts
+useModelValidation<M extends ModelValidationSource>(
+  source: M,
+  options?: ModelValidationOptions<V>,
+): ModelValidation<M>
+```
+
+Creates a validation model with `createModelValidation` of state-model. It is created at the first render, and the same one is returned afterwards. The connected model and the options (`validate`) of the first render are kept (recreate it with `key` to change them). Read the issues like `useModelValue(validation.issues(path))` and `useModelValue(validation.invalid(path))`.
 
 ### `useModelValue`
 
@@ -398,7 +451,7 @@ Creates a typed scope. Create it at the top level of a module, and import it fro
 
 ## Storybook
 
-Examples of usage are available in Storybook (filtering, sorting, and grouping a list; an order form with lines; the controlled form using the parent's state). Each row shows its render count, so you can see which parts are rendered again.
+Examples of usage are available in Storybook (filtering, sorting, and grouping a list; an order form with lines and validation; the controlled form using the parent's state). Each row shows its render count, so you can see which parts are rendered again.
 
 ```sh
 pnpm storybook
