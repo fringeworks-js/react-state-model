@@ -70,13 +70,13 @@ function ProfileForm() {
   const [profile, setProfile] = useState(initialProfile);
   const model = useRecordModel(profileDefinition, {
     data: profile,
-    onChangeData: setProfile,
+    onDataChange: setProfile,
   });
   // ...
 }
 ```
 
-モデルへの書き込みは `onChangeData` で親の state に依頼され、親が描画し直すと、新しい `data` がモデルに渡ります。1つのイベントハンドラーで続けて書いても、`await` を挟んで続けて書いても、前の変更は消えません。
+モデルへの書き込みは `onDataChange` で親の state に依頼され、親が描画し直すと、新しい `data` がモデルに渡ります。1つのイベントハンドラーで続けて書いても、`await` を挟んで続けて書いても、前の変更は消えません。
 
 ### 絞り込み・並べ替え・グループ化（派生モデル）
 
@@ -86,7 +86,7 @@ const byPrice = (a: Product, b: Product) => a.price - b.price;
 function ProductList({ keyword }: { keyword: string }) {
   const items = useListModel(productListDefinition, {
     data: products,
-    onChangeData: setProducts,
+    onDataChange: setProducts,
   });
   // 条件の関数は、条件が変わったときだけ作り直す
   const filter = useCallback(
@@ -248,27 +248,28 @@ function Total() {
 - **条件の関数は参照で比べる**: 派生モデルの条件（`filter`・`sort`・`groupBy`・`filterGroups`・`sortGroups`）は、参照が変わったときだけ差し替えます。描画のたびに関数を作ると、毎回差し替えて結果を作り直すので、`useCallback` かコンポーネントの外の関数を使ってください
 - **編集しても当て直さない**: 入力画面では `filterRefresh`・`sortRefresh` を `'manual'` にすると、編集した行が消えたり動いたりしません（state-model の README の「編集しても当て直さない」）。当て直すきっかけは `refreshOn` に渡します。`refreshOn` の1段目のプロパティのどれかが変わったら、描画の後に `refresh()` を呼びます（例: `refreshOn={{ editingId }}` で、編集する行が変わったときに当て直す）
 - **渡すタイミング**: 制御のときの `data` は、データの持ち主が描画し直したその描画の中でモデルが受け取り、購読者には描画の後（`useLayoutEffect`）に知らせます。同じ描画の中で子が新しい値を読むので、入力欄の値が古い値に書き戻されず、日本語入力なども壊れません。派生モデルの条件は描画の後に差し替えます。条件が変わった直後の1回目の描画は前の結果で、画面に表示する前にもう一度描画し直します（古い結果は画面に出ません）
-- **`onChangeData`**: 最新の関数を呼びます。描画のたびに新しい関数を渡してもかまいません
+- **`onDataChange`**: 最新の関数を呼びます。描画のたびに新しい関数を渡してもかまいません
 - **反映待ちのデータ**: 制御のとき、親がまだ反映していない変更は、新しい `data` を受け取ったとき、または次のマクロタスクで捨てます。親が変更を受け入れなかった場合も、次のタスクの書き込みには混ざりません（Chromium・Firefox・WebKit で確かめています）
 
 ## API
 
-| hook                                   | 説明                                                  |
-| -------------------------------------- | ----------------------------------------------------- |
-| `useListModel(definition, options)`    | List のルートのモデルを作る                           |
-| `useRecordModel(definition, options)`  | Record のルートのモデルを作る                         |
-| `useFieldModel(definition, options)`   | Field のルートのモデルを作る                          |
-| `useDerivedList(source, options?)`     | 絞り込み・並べ替えた派生モデルを作る                  |
-| `useGroupedList(source, options)`      | グループ化した派生モデルを作る                        |
-| `useListSelection(source, options?)`   | 一覧の選択のモデルを作る                              |
-| `useIsSelected(selection, id)`         | 行を選んでいるかを読み、変わったら描画し直す          |
-| `useModelStatus(source)`               | 状態のモデル（変更済みか）を作る                      |
-| `useModelValidation(source, options?)` | 検証のモデルを作る                                    |
-| `useModelValue(model)`                 | モデルの値を読み、変わったら描画し直す                |
-| `useModelValueState(model)`            | モデルの値とセッターを、`useState` と同じ形の組で返す |
-| `useScopedModel(id?)`                  | スコープのモデルを取り出す                            |
-| `useModelAt(path, target?)`            | 基準のモデルからの相対パスで、下位のモデルを取り出す  |
-| `createModelScope()`                   | 型付きのスコープ（スコープの部品と hook の組）を作る  |
+| hook                                   | 説明                                                      |
+| -------------------------------------- | --------------------------------------------------------- |
+| `useListModel(definition, options)`    | List のルートのモデルを作る                               |
+| `useRecordModel(definition, options)`  | Record のルートのモデルを作る                             |
+| `useFieldModel(definition, options)`   | Field のルートのモデルを作る                              |
+| `useDerivedList(source, options?)`     | 絞り込み・並べ替えた派生モデルを作る                      |
+| `useGroupedList(source, options)`      | グループ化した派生モデルを作る                            |
+| `useListSelection(source, options?)`   | 一覧の選択のモデルを作る                                  |
+| `useIsSelected(selection, id)`         | 行を選んでいるかを読み、変わったら描画し直す              |
+| `useModelStatus(source)`               | 状態のモデル（変更済みか）を作る                          |
+| `useModelValidation(source, options?)` | 検証のモデルを作る                                        |
+| `useModelValue(model)`                 | モデルの値を読み、変わったら描画し直す                    |
+| `useModelValueState(model)`            | モデルの値とセッターを、`useState` と同じ形の組で返す     |
+| `useFieldProps(model, options?)`       | モデルから、値と操作の契約に沿った部品に渡す props を作る |
+| `useScopedModel(id?)`                  | スコープのモデルを取り出す                                |
+| `useModelAt(path, target?)`            | 基準のモデルからの相対パスで、下位のモデルを取り出す      |
+| `createModelScope()`                   | 型付きのスコープ（スコープの部品と hook の組）を作る      |
 
 ### `useListModel` / `useRecordModel` / `useFieldModel`
 
@@ -293,7 +294,7 @@ useFieldModel<V>(
 | -------------- | ------------------- | -------------------------------------------------------------------- |
 | `defaultData`  | `D`                 | 非制御: 初めのデータ。モデルが中に持つ                               |
 | `data`         | `D`                 | 制御: データの持ち主のデータ。変わったら描画の後にモデルに渡す       |
-| `onChangeData` | `(data: D) => void` | 制御: 書き込みをデータの持ち主に依頼する。新しいデータ全体を受け取る |
+| `onDataChange` | `(data: D) => void` | 制御: 書き込みをデータの持ち主に依頼する。新しいデータ全体を受け取る |
 
 ### `useDerivedList`
 
@@ -383,6 +384,48 @@ useModelValueState<M extends WritableModel>(
 
 モデルの値とセッターを、`useState` と同じ形の組で返します。値は `useModelValue` と同じく、変わったら描画し直します。セッターはモデルの `set` そのもので、前の値を受け取る関数も渡せ、同じモデルなら同じ関数です。書けるモデル（`FieldModel`・`RecordModel`・`ListModel`）だけを受け付けます（派生モデルと `ids()` の戻り値は `set` を持たないので型エラーになる）。モデルが `undefined` なら、値は `undefined`、セッターは何もしない関数になります。
 
+### `useFieldProps`
+
+```ts
+useFieldProps<M extends WritableModel>(
+  model: M,
+  options?: UseFieldPropsOptions,
+): FieldProps<M>
+```
+
+モデルから、値と操作の契約（[`@fringeworks/react-contract`](https://github.com/fringeworks-js/react-contract)）に沿った部品に渡す props を作ります。[`@fringeworks/react-components`](https://github.com/fringeworks-js/react-components)・[`@fringeworks/react-primitives`](https://github.com/fringeworks-js/react-primitives) の部品などに、そのまま渡せます。
+
+```tsx
+const validation = useModelValidation(member);
+const nameProps = useFieldProps(member.field('name'), {
+  validation,
+  hideIssues: !touched && !submitted, // 触る前・送信する前は結果を隠す
+  required: true,
+});
+
+<TextInput {...nameProps} onBlur={() => setTouched(true)} />;
+```
+
+| オプション    | 型                | 説明                                                                                        |
+| ------------- | ----------------- | ------------------------------------------------------------------------------------------- |
+| `validation?` | `ModelValidation` | 検証のモデル。渡すと、モデルのパス（とその下）に結果があるときに `invalid` を `true` にする |
+| `hideIssues?` | `boolean`         | 検証の結果を隠す（`invalid` を `false` にする）。触る前・送信する前などに使う               |
+| `required?`   | `boolean`         | 必須であることを示す。そのまま戻り値の `required` にする                                    |
+
+| 戻り値          | 型                     | 説明                               |
+| --------------- | ---------------------- | ---------------------------------- |
+| `value`         | モデルの値の型         | モデルの値。変わったら描画し直す   |
+| `onValueChange` | モデルの `set`         | 値を書く（同じモデルなら同じ関数） |
+| `invalid`       | `boolean`              | 検証の結果があり、隠していないか   |
+| `required`      | `boolean \| undefined` | オプションの `required` のまま     |
+
+- 書けるモデル（`FieldModel`・`RecordModel`・`ListModel`）を受け付けます。複数の値を選ぶ部品（`CheckboxGroup` など）には、配列を値に持つ Field を渡します。
+- 検証のモデルは、ルートのモデルにつないだものでも、下位のモデルにつないだものでもかまいません。パスは、モデルのパスと検証のモデルのつなぎ先から求めます。つなぎ先の外のモデルを渡したときは、開発時に警告し、`invalid` は `false` にします。
+- 結果をいつ見せるか（触った後・送信した後など）は、画面の側で決めて `hideIssues` で渡します。触ったか・送信しようとしたかの持ち方は、Storybook の「contract（部品とつなぐ）」を見てください。
+- `required` は表示と支援技術のためのものです。必須の検査は、定義の `validate` などの規則に書きます。
+- `disabled`・`readOnly` はモデルの状態ではないので、部品に直接渡します。
+- 指す先が無いかもしれないモデル（一覧の行の下位のモデルなど）では、`value` が `undefined` になることがあります。契約では `value` が `undefined` だと非制御として扱われるので、行が無いときは部品を描かないようにします。
+
 ### `ModelScope`
 
 ```tsx
@@ -444,6 +487,8 @@ createModelScope<M extends ReadonlyModel<unknown>>(): TypedModelScope<M>
 | `ModelScopeProps`             | `ModelScope` のプロパティ                                  |
 | `ModelTarget`                 | `useModelAt` の基準のモデルの指定（id の文字列か、モデル） |
 | `WritableModel`               | 書けるモデル（`useModelValueState` が受け付けるもの）      |
+| `UseFieldPropsOptions`        | `useFieldProps` のオプション                               |
+| `FieldProps<M>`               | `useFieldProps` が返す props                               |
 | `TypedModelScope<M>`          | `createModelScope` が作る型付きのスコープ                  |
 | `TypedModelScopeProps<M>`     | 型付きのスコープの `Provider` のプロパティ                 |
 | `UseDerivedListOptions<E>`    | `useDerivedList` のオプション（`refreshOn` を含む）        |

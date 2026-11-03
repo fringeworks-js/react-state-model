@@ -53,7 +53,7 @@ describe('useRecordModel', () => {
       const [order, setOrder] = useState(initial);
       const model = useRecordModel(definition, {
         data: order,
-        onChangeData: setOrder,
+        onDataChange: setOrder,
       });
       onModel?.(model);
       const customer = useModelValue(model.field('customer'));
@@ -89,15 +89,15 @@ describe('useRecordModel', () => {
       expect(screen.getByTestId('model').textContent).toBe('Carol');
     });
 
-    it('最新の onChangeData を呼ぶ', () => {
+    it('最新の onDataChange を呼ぶ', () => {
       const first = vi.fn();
       const second = vi.fn();
       const { result, rerender } = renderHook(
-        ({ onChangeData }) =>
-          useRecordModel(definition, { data: initial, onChangeData }),
-        { initialProps: { onChangeData: first } },
+        ({ onDataChange }) =>
+          useRecordModel(definition, { data: initial, onDataChange }),
+        { initialProps: { onDataChange: first } },
       );
-      rerender({ onChangeData: second });
+      rerender({ onDataChange: second });
       act(() => {
         result.current.field('customer').set('Bob');
       });
@@ -112,7 +112,7 @@ describe('useRecordModel', () => {
         useRecordModel(
           definition,
           controlled
-            ? { data: initial, onChangeData: () => {} }
+            ? { data: initial, onDataChange: () => {} }
             : { defaultData: initial },
         ),
       { initialProps: { controlled: false } },

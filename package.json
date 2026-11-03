@@ -35,11 +35,13 @@
     "tidy": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\" --config ./prettier.tidy.config.ts"
   },
   "dependencies": {
-    "@fringeworks/react-utils": "^0.12.0",
+    "@fringeworks/react-utils": "^0.12.1",
     "@fringeworks/utils": "^2.1.0"
   },
   "devDependencies": {
     "@fringeworks/dev": "^0.13.2",
+    "@fringeworks/react-components": "^0.9.0",
+    "@fringeworks/react-primitives": "^0.1.0",
     "@fringeworks/state-model": "^0.5.0",
     "@storybook/addon-docs": "^10.3.6",
     "@storybook/react-vite": "^10.3.6",

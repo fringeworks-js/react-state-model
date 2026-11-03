@@ -29,7 +29,7 @@ function Owner({
   const [order, setOrder] = useState(initial);
   const model = useRecordModel(definition, {
     data: order,
-    onChangeData: setOrder,
+    onDataChange: setOrder,
   });
   onModel(model);
   onState(order);
@@ -103,7 +103,7 @@ describe('useRecordModel（ブラウザー）', () => {
       onModel(
         useRecordModel(definition, {
           data: initial,
-          onChangeData: (order) => changes.push(order),
+          onDataChange: (order) => changes.push(order),
         }),
       );
       return null;
@@ -123,7 +123,7 @@ describe('useRecordModel（ブラウザー）', () => {
       const [order, setOrder] = useState(initial);
       const model = useRecordModel(definition, {
         data: order,
-        onChangeData: setOrder,
+        onDataChange: setOrder,
       });
       const customer = useModelValue(model.field('customer'));
       return (

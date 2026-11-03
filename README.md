@@ -70,13 +70,13 @@ function ProfileForm() {
   const [profile, setProfile] = useState(initialProfile);
   const model = useRecordModel(profileDefinition, {
     data: profile,
-    onChangeData: setProfile,
+    onDataChange: setProfile,
   });
   // ...
 }
 ```
 
-Writes to the model are passed to the parent's state through `onChangeData`, and when the parent renders again, the new `data` is passed to the model. Consecutive writes do not lose earlier changes, whether they are in one event handler or separated by `await`.
+Writes to the model are passed to the parent's state through `onDataChange`, and when the parent renders again, the new `data` is passed to the model. Consecutive writes do not lose earlier changes, whether they are in one event handler or separated by `await`.
 
 ### Filtering, sorting, and grouping (derived models)
 
@@ -86,7 +86,7 @@ const byPrice = (a: Product, b: Product) => a.price - b.price;
 function ProductList({ keyword }: { keyword: string }) {
   const items = useListModel(productListDefinition, {
     data: products,
-    onChangeData: setProducts,
+    onDataChange: setProducts,
   });
   // Recreate the condition function only when the condition changes
   const filter = useCallback(
@@ -248,27 +248,28 @@ function Total() {
 - **Condition functions are compared by reference**: the conditions of a derived model (`filter`, `sort`, `groupBy`, `filterGroups`, `sortGroups`) are replaced only when their references change. Creating a function on every render replaces it and rebuilds the result every time, so use `useCallback` or a function outside the component
 - **Not reapplying on edits**: on input screens, set `filterRefresh` and `sortRefresh` to `'manual'` so that edited records do not disappear or move (see "Not reapplying on edits" in the README of state-model). Pass the trigger to reapply to `refreshOn`. When any first-level property of `refreshOn` changes, `refresh()` is called after rendering (e.g. `refreshOn={{ editingId }}` reapplies when the record being edited changes)
 - **When values are passed**: when controlled, the model takes the new `data` during the render in which the data owner renders again, and notifies subscribers after rendering (`useLayoutEffect`). Children read the new value in the same render, so an input's value is never written back to the old value, and input methods (such as Japanese input) are not broken. The conditions of derived models are replaced after rendering. The first render right after a condition changes shows the previous result, and the component is rendered again before it is painted (the old result never appears on screen)
-- **`onChangeData`**: the latest function is called. You may pass a new function on every render
+- **`onDataChange`**: the latest function is called. You may pass a new function on every render
 - **Pending data**: when controlled, changes the parent has not applied yet are discarded when new `data` is received, or in the next macrotask. If the parent does not accept a change, it is not mixed into writes in later tasks (verified in Chromium, Firefox, and WebKit)
 
 ## API
 
-| Hook                                   | Description                                                                            |
-| -------------------------------------- | -------------------------------------------------------------------------------------- |
-| `useListModel(definition, options)`    | Creates a root model of the List kind                                                  |
-| `useRecordModel(definition, options)`  | Creates a root model of the Record kind                                                |
-| `useFieldModel(definition, options)`   | Creates a root model of the Field kind                                                 |
-| `useDerivedList(source, options?)`     | Creates a filtered and sorted derived model                                            |
-| `useGroupedList(source, options)`      | Creates a grouped derived model                                                        |
-| `useListSelection(source, options?)`   | Creates a selection model for a list                                                   |
-| `useIsSelected(selection, id)`         | Reads whether a record is selected and renders again when it changes                   |
-| `useModelStatus(source)`               | Creates a status model (dirty)                                                         |
-| `useModelValidation(source, options?)` | Creates a validation model                                                             |
-| `useModelValue(model)`                 | Reads the value of a model and renders again when it changes                           |
-| `useModelValueState(model)`            | Returns the value of a model and its setter as a pair, in the same shape as `useState` |
-| `useScopedModel(id?)`                  | Takes out the model of a scope                                                         |
-| `useModelAt(path, target?)`            | Takes out a child model by a path relative to a base model                             |
-| `createModelScope()`                   | Creates a typed scope (a pair of a scope component and a hook)                         |
+| Hook                                   | Description                                                                                    |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `useListModel(definition, options)`    | Creates a root model of the List kind                                                          |
+| `useRecordModel(definition, options)`  | Creates a root model of the Record kind                                                        |
+| `useFieldModel(definition, options)`   | Creates a root model of the Field kind                                                         |
+| `useDerivedList(source, options?)`     | Creates a filtered and sorted derived model                                                    |
+| `useGroupedList(source, options)`      | Creates a grouped derived model                                                                |
+| `useListSelection(source, options?)`   | Creates a selection model for a list                                                           |
+| `useIsSelected(selection, id)`         | Reads whether a record is selected and renders again when it changes                           |
+| `useModelStatus(source)`               | Creates a status model (dirty)                                                                 |
+| `useModelValidation(source, options?)` | Creates a validation model                                                                     |
+| `useModelValue(model)`                 | Reads the value of a model and renders again when it changes                                   |
+| `useModelValueState(model)`            | Returns the value of a model and its setter as a pair, in the same shape as `useState`         |
+| `useFieldProps(model, options?)`       | Creates, from a model, the props for a component that follows the value and operation contract |
+| `useScopedModel(id?)`                  | Takes out the model of a scope                                                                 |
+| `useModelAt(path, target?)`            | Takes out a child model by a path relative to a base model                                     |
+| `createModelScope()`                   | Creates a typed scope (a pair of a scope component and a hook)                                 |
 
 ### `useListModel` / `useRecordModel` / `useFieldModel`
 
@@ -293,7 +294,7 @@ Creates a root model. The parameters and options are the same as `createListMode
 | -------------- | ------------------- | -------------------------------------------------------------------------------------- |
 | `defaultData`  | `D`                 | Uncontrolled: the initial data, held by the model                                      |
 | `data`         | `D`                 | Controlled: the data owner's data. Passed to the model after rendering when it changes |
-| `onChangeData` | `(data: D) => void` | Controlled: asks the data owner to apply a write. Receives the whole new data          |
+| `onDataChange` | `(data: D) => void` | Controlled: asks the data owner to apply a write. Receives the whole new data          |
 
 ### `useDerivedList`
 
@@ -383,6 +384,48 @@ useModelValueState<M extends WritableModel>(
 
 Returns the value of a model and its setter as a pair, in the same shape as `useState`. Like `useModelValue`, it renders again when the value changes. The setter is the model's `set` itself, accepts a function that receives the previous value, and is the same function for the same model. Only writable models (`FieldModel`, `RecordModel`, `ListModel`) are accepted (derived models and the return value of `ids()` have no `set`, so they are type errors). If the model is `undefined`, the value is `undefined` and the setter does nothing.
 
+### `useFieldProps`
+
+```ts
+useFieldProps<M extends WritableModel>(
+  model: M,
+  options?: UseFieldPropsOptions,
+): FieldProps<M>
+```
+
+Creates, from a model, the props for a component that follows the value and operation contract ([`@fringeworks/react-contract`](https://github.com/fringeworks-js/react-contract)). You can pass them as they are to components of [`@fringeworks/react-components`](https://github.com/fringeworks-js/react-components), [`@fringeworks/react-primitives`](https://github.com/fringeworks-js/react-primitives), and so on.
+
+```tsx
+const validation = useModelValidation(member);
+const nameProps = useFieldProps(member.field('name'), {
+  validation,
+  hideIssues: !touched && !submitted, // hide the results before touching or submitting
+  required: true,
+});
+
+<TextInput {...nameProps} onBlur={() => setTouched(true)} />;
+```
+
+| Option        | Type              | Description                                                                                                  |
+| ------------- | ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| `validation?` | `ModelValidation` | The validation model. When given, `invalid` is `true` while there are results at (or under) the model's path |
+| `hideIssues?` | `boolean`         | Hides the validation results (makes `invalid` `false`). Use it before touching or submitting, for example    |
+| `required?`   | `boolean`         | Marks it as required. Returned as `required` as it is                                                        |
+
+| Result          | Type                   | Description                                                  |
+| --------------- | ---------------------- | ------------------------------------------------------------ |
+| `value`         | The model's value type | The value of the model. Re-renders when it changes           |
+| `onValueChange` | The model's `set`      | Writes the value (the same function for the same model)      |
+| `invalid`       | `boolean`              | Whether there are validation results and they are not hidden |
+| `required`      | `boolean \| undefined` | The `required` option as it is                               |
+
+- It accepts writable models (`FieldModel`, `RecordModel`, `ListModel`). For a component that selects several values (such as `CheckboxGroup`), pass a Field whose value is an array.
+- The validation model may be connected to the root model or to a lower model. The path is computed from the model's path and where the validation model is connected. If the model is outside of it, it warns in development and `invalid` is `false`.
+- When to show the results (after touching, after submitting, and so on) is decided by the screen and passed as `hideIssues`. For how to keep whether a field was touched or a submit was attempted, see the "contract" stories in Storybook.
+- `required` is for display and assistive technology. Write the required check in rules such as `validate` of the definition.
+- `disabled` and `readOnly` are not model states, so pass them to the component directly.
+- For a model that may point to nothing (such as a lower model of a list row), `value` may be `undefined`. The contract treats an `undefined` `value` as uncontrolled, so do not render the component while the row is missing.
+
 ### `ModelScope`
 
 ```tsx
@@ -444,6 +487,8 @@ Creates a typed scope. Create it at the top level of a module, and import it fro
 | `ModelScopeProps`             | Props of `ModelScope`                                               |
 | `ModelTarget`                 | How `useModelAt` specifies the base model (an id string or a model) |
 | `WritableModel`               | A writable model (what `useModelValueState` accepts)                |
+| `UseFieldPropsOptions`        | The options of `useFieldProps`                                      |
+| `FieldProps<M>`               | The props `useFieldProps` returns                                   |
 | `TypedModelScope<M>`          | A typed scope created by `createModelScope`                         |
 | `TypedModelScopeProps<M>`     | Props of the `Provider` of a typed scope                            |
 | `UseDerivedListOptions<E>`    | Options of `useDerivedList` (including `refreshOn`)                 |

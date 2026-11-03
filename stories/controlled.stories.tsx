@@ -19,7 +19,7 @@ function ControlledForm() {
   });
   const model = useRecordModel(definition, {
     data: profile,
-    onChangeData: setProfile,
+    onDataChange: setProfile,
   });
 
   return (

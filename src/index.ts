@@ -2,6 +2,7 @@ export * from './createModelScope';
 export * from './ModelScope';
 export * from './useDerivedList';
 export * from './useFieldModel';
+export * from './useFieldProps';
 export * from './useGroupedList';
 export * from './useIsSelected';
 export * from './useListModel';

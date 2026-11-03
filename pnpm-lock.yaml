@@ -110,8 +110,8 @@ importers:
   .:
     dependencies:
       '@fringeworks/react-utils':
-        specifier: ^0.12.0
-        version: 0.12.0(react@19.3.1)
+        specifier: ^0.12.1
+        version: 0.12.1(react@19.3.1)
       '@fringeworks/utils':
         specifier: ^2.1.0
         version: 2.1.0
@@ -565,8 +565,8 @@ packages:
       typescript:
         optional: true
 
-  '@fringeworks/react-utils@0.12.0':
-    resolution: {integrity: sha512-D9/8E9xoH1+hSv7OkgjIa5zL3ipxAHN4TCpd8U2PxxG6iSGUfn1qTFgnNGrbhIwvxrvLrnqZ4G9GV2VuaFMEZw==}
+  '@fringeworks/react-utils@0.12.1':
+    resolution: {integrity: sha512-4zX+VUq1eZOdMeXcI5sPbHRVuVO9KlLqFEH0s7QA+K1+pCKhw7rIz8I+FmpR4B/zPPk1nErdrjrZ9moFKv6G4A==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
 
@@ -3267,7 +3267,7 @@ snapshots:
       - supports-color
       - vue-tsc
 
-  '@fringeworks/react-utils@0.12.0(react@19.3.1)':
+  '@fringeworks/react-utils@0.12.1(react@19.3.1)':
     dependencies:
       react: 19.3.1
 

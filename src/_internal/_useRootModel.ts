@@ -7,7 +7,7 @@ import _warn from './_warn';
  * ルートのモデルを作るときのオプション（state-model の `RecordModelOptions` などと同じ形）
  */
 type RootModelOptions<D> =
-  { defaultData: D } | { data: D; onChangeData: (data: D) => void };
+  { defaultData: D } | { data: D; onDataChange: (data: D) => void };
 
 /**
  * ルートのモデルを1回だけ作り、制御のときはデータの持ち主のデータを渡す hook
@@ -17,7 +17,7 @@ type RootModelOptions<D> =
  * - 制御のとき、データの持ち主が描画し直したその描画の中で、新しいデータを（購読者には知らせずに）受け取り、
  *   描画の後（`useLayoutEffect`）に知らせる。同じ描画の中で子が新しい値を読むので、入力欄の値が古い値に
  *   書き戻されない（書き戻されると、日本語入力などの入力中の文字が壊れる）
- * - `onChangeData` は最新のものを呼ぶ
+ * - `onDataChange` は最新のものを呼ぶ
  *
  * @param create オプションからルートのモデルを作る関数（最初の描画でだけ呼ぶ）
  * @param options データの持ち方
@@ -27,11 +27,11 @@ export default function useRootModel<D, M extends ModelRoot<D>>(
   create: (options: RootModelOptions<D>) => M,
   options: RootModelOptions<D>,
 ): M {
-  const controlled = 'onChangeData' in options;
-  const onChangeDataRef = useLatestRef(
-    controlled ? options.onChangeData : undefined,
+  const controlled = 'onDataChange' in options;
+  const onDataChangeRef = useLatestRef(
+    controlled ? options.onDataChange : undefined,
   );
-  // ref を読むのは onChangeData が呼ばれたとき（イベントハンドラーの中など）で、描画中には読まないため、lint のエラーは無視する
+  // ref を読むのは onDataChange が呼ばれたとき（イベントハンドラーの中など）で、描画中には読まないため、lint のエラーは無視する
   // eslint-disable-next-line react-hooks/refs
   const [initial] = useState(() => ({
     controlled,
@@ -39,7 +39,7 @@ export default function useRootModel<D, M extends ModelRoot<D>>(
       controlled
         ? {
             data: options.data,
-            onChangeData: (data) => onChangeDataRef.current?.(data),
+            onDataChange: (data) => onDataChangeRef.current?.(data),
           }
         : { defaultData: options.defaultData },
     ),
