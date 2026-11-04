@@ -4,7 +4,7 @@ import {
   type RecordDefinition,
 } from '@fringeworks/state-model';
 import { act, renderHook } from '@testing-library/react';
-import useFieldProps from './useFieldProps';
+import useModelProps from './useModelProps';
 
 type Line = { lineId: string; product: string };
 type Order = { customer: string; tags: string[]; lines: Line[] };
@@ -38,11 +38,11 @@ function createOrder() {
   });
 }
 
-describe('useFieldProps', () => {
+describe('useModelProps', () => {
   it('value と、モデルの set をそのまま onValueChange として返す', () => {
     const order = createOrder();
     const customer = order.field('customer');
-    const { result } = renderHook(() => useFieldProps(customer));
+    const { result } = renderHook(() => useModelProps(customer));
 
     expect(result.current).toEqual({
       value: 'Alice',
@@ -61,7 +61,7 @@ describe('useFieldProps', () => {
 
   it('配列を値に持つ Field も、そのまま渡せる（複数の値を選ぶ部品）', () => {
     const order = createOrder();
-    const { result } = renderHook(() => useFieldProps(order.field('tags')));
+    const { result } = renderHook(() => useModelProps(order.field('tags')));
 
     act(() => {
       result.current.onValueChange(['a', 'b']);
@@ -75,7 +75,7 @@ describe('useFieldProps', () => {
     const validation = createModelValidation(order);
     const customer = order.field('customer');
     const { result } = renderHook(() =>
-      useFieldProps(customer, { validation }),
+      useModelProps(customer, { validation }),
     );
 
     expect(result.current.invalid).toBe(false);
@@ -98,7 +98,7 @@ describe('useFieldProps', () => {
     const line = order.list('lines').record('L-1');
     const validation = createModelValidation(order.list('lines'));
     const product = line.field('product');
-    const { result } = renderHook(() => useFieldProps(product, { validation }));
+    const { result } = renderHook(() => useModelProps(product, { validation }));
 
     act(() => {
       product.set('');
@@ -111,7 +111,7 @@ describe('useFieldProps', () => {
     const order = createOrder();
     const validation = createModelValidation(order);
     const { result } = renderHook(() =>
-      useFieldProps(order.field('customer'), { validation }),
+      useModelProps(order.field('customer'), { validation }),
     );
 
     act(() => {
@@ -131,7 +131,7 @@ describe('useFieldProps', () => {
     order.field('customer').set('');
     const { result, rerender } = renderHook(
       ({ hideIssues }: { hideIssues: boolean }) =>
-        useFieldProps(order.field('customer'), { validation, hideIssues }),
+        useModelProps(order.field('customer'), { validation, hideIssues }),
       { initialProps: { hideIssues: true } },
     );
 
@@ -145,7 +145,7 @@ describe('useFieldProps', () => {
   it('required はそのまま返す', () => {
     const order = createOrder();
     const { result } = renderHook(() =>
-      useFieldProps(order.field('customer'), { required: true }),
+      useModelProps(order.field('customer'), { required: true }),
     );
 
     expect(result.current.required).toBe(true);
@@ -158,7 +158,7 @@ describe('useFieldProps', () => {
     const validation = createModelValidation(order);
     other.field('customer').set('');
     const { result } = renderHook(() =>
-      useFieldProps(other.field('customer'), { validation }),
+      useModelProps(other.field('customer'), { validation }),
     );
 
     expect(result.current.invalid).toBe(false);

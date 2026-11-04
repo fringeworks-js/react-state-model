@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import _warn from '../_internal/_warn';
 import useModelValue from '../useModelValue';
 import type { WritableModel } from '../useModelValueState';
-import type { FieldProps, UseFieldPropsOptions } from './types';
+import type { ModelProps, UseModelPropsOptions } from './types';
 
 /**
  * 検証のモデルのつなぎ先から見た、モデルのパスを求める。つなぎ先の外のモデルなら undefined
@@ -45,10 +45,10 @@ function relativePathOf(
  * @param options 検証のモデル・結果を隠すか・必須か
  * @returns 部品に渡す props
  */
-export default function useFieldProps<M extends WritableModel>(
+export default function useModelProps<M extends WritableModel>(
   model: M,
-  { validation, hideIssues = false, required }: UseFieldPropsOptions = {},
-): FieldProps<M> {
+  { validation, hideIssues = false, required }: UseModelPropsOptions = {},
+): ModelProps<M> {
   const value = useModelValue(model) as ReturnType<M['get']>;
 
   // 結果を読むモデル。同じパスなら同じオブジェクトが返るが、パスを求めるのと警告を毎回しないよう、組ごとに覚える
@@ -62,7 +62,7 @@ export default function useFieldProps<M extends WritableModel>(
     );
     if (path === undefined) {
       _warn(
-        'useFieldProps: 検証のモデルのつなぎ先の外のモデルが渡されました。invalid は false になります',
+        'useModelProps: 検証のモデルのつなぎ先の外のモデルが渡されました。invalid は false になります',
       );
       return undefined;
     }

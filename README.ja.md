@@ -266,7 +266,7 @@ function Total() {
 | `useModelValidation(source, options?)` | 検証のモデルを作る                                        |
 | `useModelValue(model)`                 | モデルの値を読み、変わったら描画し直す                    |
 | `useModelValueState(model)`            | モデルの値とセッターを、`useState` と同じ形の組で返す     |
-| `useFieldProps(model, options?)`       | モデルから、値と操作の契約に沿った部品に渡す props を作る |
+| `useModelProps(model, options?)`       | モデルから、値と操作の契約に沿った部品に渡す props を作る |
 | `useScopedModel(id?)`                  | スコープのモデルを取り出す                                |
 | `useModelAt(path, target?)`            | 基準のモデルからの相対パスで、下位のモデルを取り出す      |
 | `createModelScope()`                   | 型付きのスコープ（スコープの部品と hook の組）を作る      |
@@ -384,20 +384,20 @@ useModelValueState<M extends WritableModel>(
 
 モデルの値とセッターを、`useState` と同じ形の組で返します。値は `useModelValue` と同じく、変わったら描画し直します。セッターはモデルの `set` そのもので、前の値を受け取る関数も渡せ、同じモデルなら同じ関数です。書けるモデル（`FieldModel`・`RecordModel`・`ListModel`）だけを受け付けます（派生モデルと `ids()` の戻り値は `set` を持たないので型エラーになる）。モデルが `undefined` なら、値は `undefined`、セッターは何もしない関数になります。
 
-### `useFieldProps`
+### `useModelProps`
 
 ```ts
-useFieldProps<M extends WritableModel>(
+useModelProps<M extends WritableModel>(
   model: M,
-  options?: UseFieldPropsOptions,
-): FieldProps<M>
+  options?: UseModelPropsOptions,
+): ModelProps<M>
 ```
 
 モデルから、値と操作の契約（[`@fringeworks/react-contract`](https://github.com/fringeworks-js/react-contract)）に沿った部品に渡す props を作ります。[`@fringeworks/react-components`](https://github.com/fringeworks-js/react-components)・[`@fringeworks/react-primitives`](https://github.com/fringeworks-js/react-primitives) の部品などに、そのまま渡せます。
 
 ```tsx
 const validation = useModelValidation(member);
-const nameProps = useFieldProps(member.field('name'), {
+const nameProps = useModelProps(member.field('name'), {
   validation,
   hideIssues: !touched && !submitted, // 触る前・送信する前は結果を隠す
   required: true,
@@ -487,8 +487,8 @@ createModelScope<M extends ReadonlyModel<unknown>>(): TypedModelScope<M>
 | `ModelScopeProps`             | `ModelScope` のプロパティ                                  |
 | `ModelTarget`                 | `useModelAt` の基準のモデルの指定（id の文字列か、モデル） |
 | `WritableModel`               | 書けるモデル（`useModelValueState` が受け付けるもの）      |
-| `UseFieldPropsOptions`        | `useFieldProps` のオプション                               |
-| `FieldProps<M>`               | `useFieldProps` が返す props                               |
+| `UseModelPropsOptions`        | `useModelProps` のオプション                               |
+| `ModelProps<M>`               | `useModelProps` が返す props                               |
 | `TypedModelScope<M>`          | `createModelScope` が作る型付きのスコープ                  |
 | `TypedModelScopeProps<M>`     | 型付きのスコープの `Provider` のプロパティ                 |
 | `UseDerivedListOptions<E>`    | `useDerivedList` のオプション（`refreshOn` を含む）        |

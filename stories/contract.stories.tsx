@@ -15,7 +15,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactNode } from 'react';
 import {
   useFieldModel,
-  useFieldProps,
+  useModelProps,
   useModelValidation,
   useModelValue,
   useRecordModel,
@@ -138,17 +138,17 @@ function MemberForm() {
   const hideInterests = useHideIssues(feedback, 'interests');
 
   // モデルから契約の props を作り、部品にそのまま渡す
-  const nameProps = useFieldProps(name, {
+  const nameProps = useModelProps(name, {
     validation,
     hideIssues: hideName,
     required: true,
   });
-  const planProps = useFieldProps(plan, {
+  const planProps = useModelProps(plan, {
     validation,
     hideIssues: hidePlan,
     required: true,
   });
-  const interestsProps = useFieldProps(interests, {
+  const interestsProps = useModelProps(interests, {
     validation,
     hideIssues: hideInterests,
   });
@@ -249,7 +249,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * `useFieldProps` で、モデルから値と操作の契約の props（`value`・`onValueChange`・`invalid`・`required`）を作り、
+ * `useModelProps` で、モデルから値と操作の契約の props（`value`・`onValueChange`・`invalid`・`required`）を作り、
  * react-components の部品にそのまま渡す。
  * 結果は、触った（フォーカスが外れた）後か、送信しようとした後だけ見せる（`hideIssues`）
  */

@@ -266,7 +266,7 @@ function Total() {
 | `useModelValidation(source, options?)` | Creates a validation model                                                                     |
 | `useModelValue(model)`                 | Reads the value of a model and renders again when it changes                                   |
 | `useModelValueState(model)`            | Returns the value of a model and its setter as a pair, in the same shape as `useState`         |
-| `useFieldProps(model, options?)`       | Creates, from a model, the props for a component that follows the value and operation contract |
+| `useModelProps(model, options?)`       | Creates, from a model, the props for a component that follows the value and operation contract |
 | `useScopedModel(id?)`                  | Takes out the model of a scope                                                                 |
 | `useModelAt(path, target?)`            | Takes out a child model by a path relative to a base model                                     |
 | `createModelScope()`                   | Creates a typed scope (a pair of a scope component and a hook)                                 |
@@ -384,20 +384,20 @@ useModelValueState<M extends WritableModel>(
 
 Returns the value of a model and its setter as a pair, in the same shape as `useState`. Like `useModelValue`, it renders again when the value changes. The setter is the model's `set` itself, accepts a function that receives the previous value, and is the same function for the same model. Only writable models (`FieldModel`, `RecordModel`, `ListModel`) are accepted (derived models and the return value of `ids()` have no `set`, so they are type errors). If the model is `undefined`, the value is `undefined` and the setter does nothing.
 
-### `useFieldProps`
+### `useModelProps`
 
 ```ts
-useFieldProps<M extends WritableModel>(
+useModelProps<M extends WritableModel>(
   model: M,
-  options?: UseFieldPropsOptions,
-): FieldProps<M>
+  options?: UseModelPropsOptions,
+): ModelProps<M>
 ```
 
 Creates, from a model, the props for a component that follows the value and operation contract ([`@fringeworks/react-contract`](https://github.com/fringeworks-js/react-contract)). You can pass them as they are to components of [`@fringeworks/react-components`](https://github.com/fringeworks-js/react-components), [`@fringeworks/react-primitives`](https://github.com/fringeworks-js/react-primitives), and so on.
 
 ```tsx
 const validation = useModelValidation(member);
-const nameProps = useFieldProps(member.field('name'), {
+const nameProps = useModelProps(member.field('name'), {
   validation,
   hideIssues: !touched && !submitted, // hide the results before touching or submitting
   required: true,
@@ -487,8 +487,8 @@ Creates a typed scope. Create it at the top level of a module, and import it fro
 | `ModelScopeProps`             | Props of `ModelScope`                                               |
 | `ModelTarget`                 | How `useModelAt` specifies the base model (an id string or a model) |
 | `WritableModel`               | A writable model (what `useModelValueState` accepts)                |
-| `UseFieldPropsOptions`        | The options of `useFieldProps`                                      |
-| `FieldProps<M>`               | The props `useFieldProps` returns                                   |
+| `UseModelPropsOptions`        | The options of `useModelProps`                                      |
+| `ModelProps<M>`               | The props `useModelProps` returns                                   |
 | `TypedModelScope<M>`          | A typed scope created by `createModelScope`                         |
 | `TypedModelScopeProps<M>`     | Props of the `Provider` of a typed scope                            |
 | `UseDerivedListOptions<E>`    | Options of `useDerivedList` (including `refreshOn`)                 |

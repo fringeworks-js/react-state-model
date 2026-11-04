@@ -2,9 +2,9 @@ import type { ModelValidation } from '@fringeworks/state-model';
 import type { WritableModel } from '../useModelValueState';
 
 /**
- * `useFieldProps` のオプション
+ * `useModelProps` のオプション
  */
-export type UseFieldPropsOptions = {
+export type UseModelPropsOptions = {
   /**
    * 検証のモデル。渡すと、モデルのパスに結果があるときに `invalid` を `true` にする
    */
@@ -22,9 +22,9 @@ export type UseFieldPropsOptions = {
 };
 
 /**
- * `useFieldProps` が返す props（値と操作の契約の `value`・`onValueChange`・`invalid`・`required`）
+ * `useModelProps` が返す props（値と操作の契約の `value`・`onValueChange`・`invalid`・`required`）
  */
-export type FieldProps<M extends WritableModel> = {
+export type ModelProps<M extends WritableModel> = {
   /**
    * モデルの値
    */
