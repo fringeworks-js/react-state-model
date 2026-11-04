@@ -62,7 +62,7 @@ export default function useModelProps<M extends WritableModel>(
     );
     if (path === undefined) {
       _warn(
-        'useModelProps: 検証のモデルのつなぎ先の外のモデルが渡されました。invalid は false になります',
+        'The model given to useModelProps is outside the source of the validation. invalid is always false.',
       );
       return undefined;
     }

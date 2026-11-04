@@ -1,6 +1,6 @@
 {
   "name": "@fringeworks/react-state-model",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "A library some will find handy, for using @fringeworks/state-model in React components.",
   "keywords": [
@@ -31,7 +31,7 @@
     "release": "pnpm build && npm publish ./dist",
     "storybook": "storybook dev -p 6006",
     "test": "vitest --project unit --project browser",
-    "test:browsers": "vitest run --project unit --project all-browsers",
+    "test:browsers": "vitest run --project unit --project all-browsers --coverage.enabled=false",
     "tidy": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\" --config ./prettier.tidy.config.ts"
   },
   "dependencies": {
