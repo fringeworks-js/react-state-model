@@ -163,8 +163,6 @@ const visible = touched || isSubmitted ? issues : [];
 
 入力欄の部品が「値にできない入力」（`"1,2,"` など）を知らせたいときは、`validation.setIssuesAt('view', path, issues)` で入れ、問題が無くなったら空の配列を入れます（部品が消えるときにも空にします）。規則の結果とまとめて `invalid()` に出ます。
 
-Storybook の「注文フォーム」に、これらを組み合わせた例があります。
-
 ### ネストした部品で使う（スコープ）
 
 ソースコードが分かれて何段もネストした画面や、子が動的に描かれる画面（設定から描く画面など）では、モデルを props で渡し続けるのが難しくなります。`ModelScope` でモデルを子孫に配り、部品は最寄りのスコープのモデルを使います。
@@ -421,7 +419,7 @@ const nameProps = useModelProps(member.field('name'), {
 
 - 書けるモデル（`FieldModel`・`RecordModel`・`ListModel`）を受け付けます。複数の値を選ぶ部品（`CheckboxGroup` など）には、配列を値に持つ Field を渡します。
 - 検証のモデルは、ルートのモデルにつないだものでも、下位のモデルにつないだものでもかまいません。パスは、モデルのパスと検証のモデルのつなぎ先から求めます。つなぎ先の外のモデルを渡したときは、開発時に警告し、`invalid` は `false` にします。
-- 結果をいつ見せるか（触った後・送信した後など）は、画面の側で決めて `hideIssues` で渡します。触ったか・送信しようとしたかの持ち方は、Storybook の「contract（部品とつなぐ）」を見てください。
+- 結果をいつ見せるか（触った後・送信した後など）は、画面の側で決めて `hideIssues` で渡します。たとえば、触った項目のキーの一覧と、送信しようとしたかどうかを state（`useState` や `useFieldModel`）で持ち、部品の `onBlur` でキーを足し、送信のボタンで送信済みにします。項目ごとに「触っていない、かつ送信していない」ときだけ `hideIssues` を `true` にします。
 - `required` は表示と支援技術のためのものです。必須の検査は、定義の `validate` などの規則に書きます。
 - `disabled`・`readOnly` はモデルの状態ではないので、部品に直接渡します。
 - 指す先が無いかもしれないモデル（一覧の行の下位のモデルなど）では、`value` が `undefined` になることがあります。契約では `value` が `undefined` だと非制御として扱われるので、行が無いときは部品を描かないようにします。
@@ -482,22 +480,15 @@ createModelScope<M extends ReadonlyModel<unknown>>(): TypedModelScope<M>
 
 ### 型
 
-| 型                            | 説明                                                       |
-| ----------------------------- | ---------------------------------------------------------- |
-| `ModelScopeProps`             | `ModelScope` のプロパティ                                  |
-| `ModelTarget`                 | `useModelAt` の基準のモデルの指定（id の文字列か、モデル） |
-| `WritableModel`               | 書けるモデル（`useModelValueState` が受け付けるもの）      |
-| `UseModelPropsOptions`        | `useModelProps` のオプション                               |
-| `ModelProps<M>`               | `useModelProps` が返す props                               |
-| `TypedModelScope<M>`          | `createModelScope` が作る型付きのスコープ                  |
-| `TypedModelScopeProps<M>`     | 型付きのスコープの `Provider` のプロパティ                 |
-| `UseDerivedListOptions<E>`    | `useDerivedList` のオプション（`refreshOn` を含む）        |
-| `UseGroupedListOptions<E, K>` | `useGroupedList` のオプション（`refreshOn` を含む）        |
-
-## Storybook
-
-使い方の例を Storybook で見られます（一覧の絞り込み・並べ替え・グループ化、注文と明細のフォームと検証、親の state を使う制御の形）。行ごとに描画の回数を表示しているので、どこが描画し直すかを確かめられます。
-
-```sh
-pnpm storybook
-```
+| 型                            | 説明                                                                              |
+| ----------------------------- | --------------------------------------------------------------------------------- |
+| `ModelScopeProps`             | `ModelScope` のプロパティ                                                         |
+| `ModelTarget`                 | `useModelAt` の基準のモデルの指定（id の文字列か、モデル）                        |
+| `WritableModel`               | 書けるモデル（`useModelValueState` が受け付けるもの）                             |
+| `UseModelPropsOptions`        | `useModelProps` のオプション                                                      |
+| `ModelProps<M>`               | `useModelProps` が返す props                                                      |
+| `TypedModelScope<M>`          | `createModelScope` が作る型付きのスコープ                                         |
+| `TypedModelScopeProps<M>`     | 型付きのスコープの `Provider` のプロパティ                                        |
+| `UseDerivedListOptions<E>`    | `useDerivedList` のオプション（`refreshOn` を含む）                               |
+| `UseGroupedListOptions<E, K>` | `useGroupedList` のオプション（`refreshOn` を含む）                               |
+| `ChangeDependencies`          | `refreshOn` に渡す、きっかけの値のオブジェクト（`@fringeworks/react-utils` の型） |

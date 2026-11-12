@@ -11,3 +11,7 @@ export type UseDerivedListOptions<E> = DerivedListOptions<E> & {
    */
   refreshOn?: ChangeDependencies;
 };
+
+// 当て直すきっかけの型（`useDerivedList`・`useGroupedList` の `refreshOn`）。
+// 利用者が `@fringeworks/react-utils` を入れずに使えるよう、ここから export する
+export type { ChangeDependencies } from '@fringeworks/react-utils/hooks/useChangeEffect';

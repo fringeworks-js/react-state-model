@@ -1,6 +1,6 @@
 {
   "name": "@fringeworks/react-state-model",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": true,
   "description": "A library some will find handy, for using @fringeworks/state-model in React components.",
   "keywords": [
@@ -35,39 +35,39 @@
     "tidy": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\" --config ./prettier.tidy.config.ts"
   },
   "dependencies": {
-    "@fringeworks/react-utils": "^0.12.2",
-    "@fringeworks/utils": "^2.2.0"
+    "@fringeworks/react-utils": "^0.13.0",
+    "@fringeworks/utils": "^2.3.0"
   },
   "devDependencies": {
-    "@fringeworks/dev": "^0.13.3",
-    "@fringeworks/react-components": "^0.10.0",
-    "@fringeworks/react-primitives": "^0.2.0",
-    "@fringeworks/state-model": "^0.6.2",
-    "@storybook/addon-docs": "^10.3.6",
-    "@storybook/react-vite": "^10.3.6",
+    "@fringeworks/dev": "^0.13.4",
+    "@fringeworks/react-components": "^0.10.1",
+    "@fringeworks/react-primitives": "^0.2.1",
+    "@fringeworks/state-model": "^0.7.0",
+    "@storybook/addon-docs": "^10.6.7",
+    "@storybook/react-vite": "^10.6.7",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^25.9.9",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/browser-playwright": "^4.1.11",
-    "@vitest/coverage-v8": "^4.1.11",
-    "eslint": "^10.12.0",
-    "eslint-plugin-storybook": "^10.3.6",
-    "jsdom": "^30.1.1",
-    "playwright": "^1.60.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "@vitest/browser-playwright": "^4.1.12",
+    "@vitest/coverage-v8": "^4.1.12",
+    "eslint": "^10.14.0",
+    "eslint-plugin-storybook": "^10.6.7",
+    "jsdom": "^30.1.3",
+    "playwright": "^1.65.0",
     "prettier": "^3.9.10",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "storybook": "^10.3.6",
-    "tsdown": "^0.23.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "storybook": "^10.6.7",
+    "tsdown": "^0.23.7",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vite": "^8.0.12",
-    "vitest": "^4.1.11"
+    "vite": "^8.3.8",
+    "vitest": "^4.1.12"
   },
   "peerDependencies": {
-    "@fringeworks/state-model": "^0.6.2",
+    "@fringeworks/state-model": "^0.7.0",
     "react": "^18.0.0 || ^19.0.0"
   },
   "packageManager": "pnpm@12.3.4+sha512.961aa41fb077da3a04a441d9f8e15ebc0c96da8ef710b2eb67bf9ee7cb0610eabd48f1fd85f51cffe73846785fa0f87c56a3a872a1d893f8446741b5cce45457"

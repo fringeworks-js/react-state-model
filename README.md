@@ -163,8 +163,6 @@ const visible = touched || isSubmitted ? issues : [];
 
 When an input component wants to report input that cannot become a value (such as `"1,2,"`), set it with `validation.setIssuesAt('view', path, issues)`, and set an empty array when the problem is gone (also when the component is removed). It appears in `invalid()` together with the issues of the rules.
 
-The "注文フォーム" (order form) story in Storybook combines these.
-
 ### Using models in nested components (scopes)
 
 On screens where the source code is split and nested many levels deep, or where children are rendered dynamically (such as screens rendered from settings), passing models down through props becomes hard. `ModelScope` provides a model to descendants, and components use the model of the nearest scope.
@@ -421,7 +419,7 @@ const nameProps = useModelProps(member.field('name'), {
 
 - It accepts writable models (`FieldModel`, `RecordModel`, `ListModel`). For a component that selects several values (such as `CheckboxGroup`), pass a Field whose value is an array.
 - The validation model may be connected to the root model or to a lower model. The path is computed from the model's path and where the validation model is connected. If the model is outside of it, it warns in development and `invalid` is `false`.
-- When to show the results (after touching, after submitting, and so on) is decided by the screen and passed as `hideIssues`. For how to keep whether a field was touched or a submit was attempted, see the "contract" stories in Storybook.
+- When to show the results (after touching, after submitting, and so on) is decided by the screen and passed as `hideIssues`. For example, keep the keys of the fields that were touched and whether a submit was attempted in state (`useState` or `useFieldModel`), add the key in the component's `onBlur`, and mark it as submitted with the submit button. Set `hideIssues` to `true` for a field only when it has not been touched and no submit has been attempted.
 - `required` is for display and assistive technology. Write the required check in rules such as `validate` of the definition.
 - `disabled` and `readOnly` are not model states, so pass them to the component directly.
 - For a model that may point to nothing (such as a lower model of a list row), `value` may be `undefined`. The contract treats an `undefined` `value` as uncontrolled, so do not render the component while the row is missing.
@@ -482,22 +480,15 @@ Creates a typed scope. Create it at the top level of a module, and import it fro
 
 ### Types
 
-| Type                          | Description                                                         |
-| ----------------------------- | ------------------------------------------------------------------- |
-| `ModelScopeProps`             | Props of `ModelScope`                                               |
-| `ModelTarget`                 | How `useModelAt` specifies the base model (an id string or a model) |
-| `WritableModel`               | A writable model (what `useModelValueState` accepts)                |
-| `UseModelPropsOptions`        | The options of `useModelProps`                                      |
-| `ModelProps<M>`               | The props `useModelProps` returns                                   |
-| `TypedModelScope<M>`          | A typed scope created by `createModelScope`                         |
-| `TypedModelScopeProps<M>`     | Props of the `Provider` of a typed scope                            |
-| `UseDerivedListOptions<E>`    | Options of `useDerivedList` (including `refreshOn`)                 |
-| `UseGroupedListOptions<E, K>` | Options of `useGroupedList` (including `refreshOn`)                 |
-
-## Storybook
-
-Examples of usage are available in Storybook (filtering, sorting, and grouping a list; an order form with lines and validation; the controlled form using the parent's state). Each row shows its render count, so you can see which parts are rendered again.
-
-```sh
-pnpm storybook
-```
+| Type                          | Description                                                                               |
+| ----------------------------- | ----------------------------------------------------------------------------------------- |
+| `ModelScopeProps`             | Props of `ModelScope`                                                                     |
+| `ModelTarget`                 | How `useModelAt` specifies the base model (an id string or a model)                       |
+| `WritableModel`               | A writable model (what `useModelValueState` accepts)                                      |
+| `UseModelPropsOptions`        | The options of `useModelProps`                                                            |
+| `ModelProps<M>`               | The props `useModelProps` returns                                                         |
+| `TypedModelScope<M>`          | A typed scope created by `createModelScope`                                               |
+| `TypedModelScopeProps<M>`     | Props of the `Provider` of a typed scope                                                  |
+| `UseDerivedListOptions<E>`    | Options of `useDerivedList` (including `refreshOn`)                                       |
+| `UseGroupedListOptions<E, K>` | Options of `useGroupedList` (including `refreshOn`)                                       |
+| `ChangeDependencies`          | The object of trigger values passed to `refreshOn` (a type of `@fringeworks/react-utils`) |
